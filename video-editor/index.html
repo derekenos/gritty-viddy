@@ -16,28 +16,16 @@
      }
     </style>
 
-    <script>
-     function* pixelIterator (imageData) {
-       const maxI = imageData.width * imageData.height * 4
-       const data = imageData.data
-       for (let i = 0; i < maxI; i += 4) {
-         yield [ i, data[i], data[i + 1], data[i + 2], data[i + 3] ]
-       }
-     }
+    <script type="module">
+     import { applyPixelFilters } from "./filters.js"
+     import {
+       brightnessFilter,
+       channelFilter,
+       thresholdFilter,
+     } from "./pixelFilters.js"
 
      const dumpFrameToCanvas = (video, canvas) =>
        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
-
-     const channelFilter = channels => imageData => {
-       const channelPixelOffsetMap = { "r": 0, "g": 1, "b": 2, "a": 3 }
-       const channelPixelOffsets = channels.map(x => channelPixelOffsetMap[x])
-       for (let [ i, r, g, b, a ] of pixelIterator(imageData)) {
-         for (let channelPixelOffset of channelPixelOffsets) {
-           imageData.data[i + channelPixelOffset] = 0
-         }
-       }
-       return imageData
-     }
 
      function init () {
        // Start video stream.
@@ -55,14 +43,16 @@
          dumpFrameToCanvas(video, workCanvas)
          const ctx = workCanvas.getContext("2d")
          let imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height)
-         for (let filter of filters) {
-           imageData = filter(imageData)
-         }
+         imageData = applyPixelFilters(filters, imageData)
          return imageData
        }
 
        function process () {
-         const filters = [ channelFilter([ "r", "g" ]) ]
+         const filters = [
+           brightnessFilter(3.0),
+           channelFilter([ "r", "g" ]),
+           thresholdFilter(20),
+         ]
          finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
        }
 
