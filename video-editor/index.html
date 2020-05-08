@@ -1,0 +1,83 @@
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <style>
+     video,
+     canvas {
+       width: calc(4 * 160px);
+       height: calc(3 * 160px);
+       border: solid #000 1px;
+     }
+
+     canvas#work {
+       display: none;
+     }
+    </style>
+
+    <script>
+     function* pixelIterator (imageData) {
+       const maxI = imageData.width * imageData.height * 4
+       const data = imageData.data
+       for (let i = 0; i < maxI; i += 4) {
+         yield [ i, data[i], data[i + 1], data[i + 2], data[i + 3] ]
+       }
+     }
+
+     const dumpFrameToCanvas = (video, canvas) =>
+       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
+
+     const channelFilter = channels => imageData => {
+       const channelPixelOffsetMap = { "r": 0, "g": 1, "b": 2, "a": 3 }
+       const channelPixelOffsets = channels.map(x => channelPixelOffsetMap[x])
+       for (let [ i, r, g, b, a ] of pixelIterator(imageData)) {
+         for (let channelPixelOffset of channelPixelOffsets) {
+           imageData.data[i + channelPixelOffset] = 0
+         }
+       }
+       return imageData
+     }
+
+     function init () {
+       // Start video stream.
+       const video = document.querySelector("video")
+       navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+         video.srcObject = stream
+       })
+
+       const workCanvas = document.querySelector("canvas#work")
+       const workCanvasCtx = workCanvas.getContext("2d")
+       const finalCanvas = document.querySelector("canvas#final")
+       const finalCanvasCtx = finalCanvas.getContext("2d")
+
+       function getProcessedImageData (filters = []) {
+         dumpFrameToCanvas(video, workCanvas)
+         const ctx = workCanvas.getContext("2d")
+         let imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height)
+         for (let filter of filters) {
+           imageData = filter(imageData)
+         }
+         return imageData
+       }
+
+       function process () {
+         const filters = [ channelFilter([ "r", "g" ]) ]
+         finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
+       }
+
+       setInterval(process, 33)
+     }
+
+     document.addEventListener("DOMContentLoaded", init)
+    </script>
+
+  </head>
+
+  <body>
+    <video autoplay="true"></video>
+    <canvas id="work"></canvas>
+    <canvas id="final"></canvas>
+  </body>
+
+</html>
