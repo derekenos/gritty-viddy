@@ -6,8 +6,8 @@
     <style>
      video,
      canvas {
-       width: calc(4 * 160px);
-       height: calc(3 * 160px);
+       width: 1280px;
+       height: 720px;
        border: solid #000 1px;
      }
 
@@ -17,10 +17,13 @@
     </style>
 
     <script type="module">
+     import Animator from "./animator.js"
      import { applyPixelFilters } from "./filters.js"
      import {
        brightnessFilter,
        channelFilter,
+       colorBalanceFilter,
+       invertFilter,
        thresholdFilter,
      } from "./pixelFilters.js"
 
@@ -30,9 +33,11 @@
      function init () {
        // Start video stream.
        const video = document.querySelector("video")
-       navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-         video.srcObject = stream
-       })
+       navigator.mediaDevices
+         .getUserMedia({ video: { width: 1280, height: 720 } })
+         .then(stream => {
+           video.srcObject = stream
+         })
 
        const workCanvas = document.querySelector("canvas#work")
        const workCanvasCtx = workCanvas.getContext("2d")
@@ -47,16 +52,25 @@
          return imageData
        }
 
+       const anim = Animator({ stepsPerCycle: 128 })
        function process () {
-         const filters = [
-           brightnessFilter(3.0),
-           channelFilter([ "r", "g" ]),
-           thresholdFilter(20),
-         ]
-         finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
+         finalCanvasCtx.putImageData(
+           getProcessedImageData(
+             [
+               //thresholdFilter(anim.linearInterpolate(255, 100)),
+               //channelFilter([ "r", "g" ]),
+               //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
+               invertFilter,
+               brightnessFilter(1),
+             ]
+           ),
+           0,
+           0
+         )
+         anim.step()
        }
 
-       setInterval(process, 33)
+       setInterval(process, 16)
      }
 
      document.addEventListener("DOMContentLoaded", init)
