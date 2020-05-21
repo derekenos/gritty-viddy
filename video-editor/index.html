@@ -22,8 +22,11 @@
      import {
        brightnessFilter,
        channelFilter,
+       colBlankerFilter,
        colorBalanceFilter,
+       colorReducerFilter,
        invertFilter,
+       rowBlankerFilter,
        thresholdFilter,
      } from "./pixelFilters.js"
 
@@ -52,16 +55,19 @@
          return imageData
        }
 
-       const anim = Animator({ stepsPerCycle: 128 })
+       const anim = Animator({ stepsPerCycle: 32, oneShot: true })
        function process () {
          finalCanvasCtx.putImageData(
            getProcessedImageData(
              [
-               //thresholdFilter(anim.linearInterpolate(255, 100)),
+               //thresholdFilter(anim.linearInterpolate(0, 100)),
                //channelFilter([ "r", "g" ]),
                //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
+               //colorReducerFilter(0b11000000),
                invertFilter,
-               brightnessFilter(1),
+               brightnessFilter(0),
+               rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
+               colBlankerFilter(col => col % 2 === 0, [ 255, 255, 255, 255 ]),
              ]
            ),
            0,

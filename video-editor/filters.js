@@ -8,14 +8,21 @@ function* pixelIterator (imageData) {
 }
 
 export function applyPixelFilters(filters, imageData) {
+  let row = 0
+  let col = 0
   for (let [ i, ...pixel ] of pixelIterator(imageData)) {
     for (let filter of filters) {
-      pixel = filter(pixel)
+      pixel = filter(pixel, i, col, row)
     }
     imageData.data[i] = pixel[0]
     imageData.data[i + 1] = pixel[1]
     imageData.data[i + 2] = pixel[2]
     imageData.data[i + 3] = pixel[3]
+    col += 1
+    if (col === imageData.width) {
+      row += 1
+      col = 0
+    }
   }
   return imageData
 }

@@ -28,29 +28,53 @@ export const thresholdFilter = threshold => pixel => {
 
 // brightnessFilter
 
-export const brightnessFilter = factor => pixel => {
-  for (let i of [ 0, 1, 2 ]) {
-    pixel[i] = clamp(pixel[i] + pixel[i] * factor)
-  }
-  return pixel
+export const brightnessFilter = factor => ([ r, g, b, a ]) => {
+  r = clamp(r + r * factor)
+  g = clamp(g + g * factor)
+  b = clamp(b + b * factor)
+  return [ r, g, b, a ]
 }
 
 
 // colorBalanceFilter
 
-export const colorBalanceFilter = (r, g, b) => pixel => {
-  pixel[0] = clamp(pixel[0] + r)
-  pixel[1] = clamp(pixel[1] + g)
-  pixel[2] = clamp(pixel[2] + b)
-  return pixel
+export const colorBalanceFilter = (rVal, gVal, bVal) => ([ r, g, b, a ]) => {
+  r = clamp(r + rVal)
+  g = clamp(g + gVal)
+  b = clamp(b + bVal)
+  return [ r, g, b, a ]
 }
 
 
 // invertFilter
 
-export const invertFilter = pixel => {
-  pixel[0] = 255 - pixel[0]
-  pixel[1] = 255 - pixel[1]
-  pixel[2] = 255 - pixel[2]
-  return pixel
+export const invertFilter = ([ r, g, b, a ]) => {
+  r = 255 - r
+  g = 255 - g
+  b = 255 - b
+  return [ r, g, b, a ]
+}
+
+
+// colorReducerFilter
+
+export const colorReducerFilter = ( mask = 0x80 ) => ([ r, g, b, a ]) => {
+  r = r & mask
+  g = g & mask
+  b = b & mask
+  return [ r, g, b, a ]
+}
+
+
+// rowBlankerFilter
+
+export const rowBlankerFilter = ( predicate, fill = [ 0, 0, 0, 255 ]) => (pixel, i, col, row) => {
+  return predicate(row) ? fill : pixel
+}
+
+
+// colBlankerFilter
+
+export const colBlankerFilter = ( predicate, fill = [ 0, 0, 0, 255 ]) => (pixel, i, col, row) => {
+  return predicate(col) ? fill : pixel
 }
