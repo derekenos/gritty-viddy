@@ -9,10 +9,26 @@
        width: 1280px;
        height: 720px;
        border: solid #000 1px;
+       display: none;
      }
 
-     canvas#work {
-       display: none;
+     #final-wrapper {
+       display: inline-block;
+       position: relative;
+     }
+
+     #final-wrapper > button {
+       position: absolute;
+       top: 16px;
+       right: 16px;
+       background-color: rgba(0, 0, 0, .5);
+       color: #fff;
+       font-size: 16px;
+       cursor: pointer;
+     }
+
+     canvas#final {
+       display: block;
      }
     </style>
 
@@ -47,6 +63,12 @@
        const finalCanvas = document.querySelector("canvas#final")
        const finalCanvasCtx = finalCanvas.getContext("2d")
 
+       // Add fullscreen button handler.
+       document.querySelector("#final-wrapper > button")
+         .addEventListener("click", () => {
+           finalCanvas.requestFullscreen()
+         })
+
        function getProcessedImageData (filters = []) {
          dumpFrameToCanvas(video, workCanvas)
          const ctx = workCanvas.getContext("2d")
@@ -55,19 +77,20 @@
          return imageData
        }
 
-       const anim = Animator({ stepsPerCycle: 32, oneShot: true })
+       const anim = Animator({ stepsPerCycle: 32 })
        function process () {
          finalCanvasCtx.putImageData(
            getProcessedImageData(
              [
-               //thresholdFilter(anim.linearInterpolate(0, 100)),
+               thresholdFilter(50),
                //channelFilter([ "r", "g" ]),
                //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
                //colorReducerFilter(0b11000000),
+               brightnessFilter(anim.linearInterpolate(3, 0)),
+               //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
+               //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
+               colBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
                invertFilter,
-               brightnessFilter(0),
-               rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
-               colBlankerFilter(col => col % 2 === 0, [ 255, 255, 255, 255 ]),
              ]
            ),
            0,
@@ -76,7 +99,7 @@
          anim.step()
        }
 
-       setInterval(process, 16)
+       setInterval(process, 33)
      }
 
      document.addEventListener("DOMContentLoaded", init)
@@ -87,7 +110,10 @@
   <body>
     <video autoplay="true"></video>
     <canvas id="work"></canvas>
-    <canvas id="final"></canvas>
+    <div id="final-wrapper">
+      <canvas id="final"></canvas>
+      <button>&#8644;</button>
+    </div>
   </body>
 
 </html>
