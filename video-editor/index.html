@@ -17,7 +17,7 @@
        position: relative;
      }
 
-     #final-wrapper > button {
+     #final-controls {
        position: absolute;
        top: 16px;
        right: 16px;
@@ -35,6 +35,7 @@
     <script type="module">
      import Animator from "./animator.js"
      import { applyPixelFilters } from "./filters.js"
+     import CanvasRecorder from "./CanvasRecorder.js"
      import {
        brightnessFilter,
        channelFilter,
@@ -49,22 +50,49 @@
      const dumpFrameToCanvas = (video, canvas) =>
        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
 
+     function initRecordControls (button, canvas) {
+       button.textContent = "Start Recording"
+       const recorder = new CanvasRecorder(canvas)
+       button.addEventListener("click", e => {
+         switch (recorder.state) {
+           case "inactive":
+             recorder.start()
+             e.target.textContent = "Stop Recording"
+             break
+           case "recording":
+             recorder.stop()
+             e.target.textContent = "Start Recording"
+             break
+           default:
+             throw new Error(`Unhandled recorder state: ${recorder.state}`)
+             break
+         }
+       })
+     }
+
      function init () {
        // Start video stream.
        const video = document.querySelector("video")
+       const width = 1280
+       const height = 720
        navigator.mediaDevices
-         .getUserMedia({ video: { width: 1280, height: 720 } })
+         .getUserMedia({ video: { width, height } })
          .then(stream => {
            video.srcObject = stream
          })
 
+       const canvasScale = 1 / 2
        const workCanvas = document.querySelector("canvas#work")
+       workCanvas.width = width * canvasScale
+       workCanvas.height = height * canvasScale
        const workCanvasCtx = workCanvas.getContext("2d")
        const finalCanvas = document.querySelector("canvas#final")
+       finalCanvas.width = width * canvasScale
+       finalCanvas.height = height * canvasScale
        const finalCanvasCtx = finalCanvas.getContext("2d")
 
        // Add fullscreen button handler.
-       document.querySelector("#final-wrapper > button")
+       document.getElementById("final-fullscreen")
          .addEventListener("click", () => {
            finalCanvas.requestFullscreen()
          })
@@ -82,15 +110,15 @@
          finalCanvasCtx.putImageData(
            getProcessedImageData(
              [
-               thresholdFilter(50),
+               //thresholdFilter(100),
                //channelFilter([ "r", "g" ]),
                //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
-               //colorReducerFilter(0b11000000),
-               brightnessFilter(anim.linearInterpolate(3, 0)),
+               colorReducerFilter(0b00111111),
                //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
                //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
-               colBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
-               invertFilter,
+               //colBlankerFilter(row => row % anim.linearInterpolate(2, 16) === 3, [ 0, 0, 0, 255 ]),
+               //invertFilter,
+               brightnessFilter(0),
              ]
            ),
            0,
@@ -100,6 +128,11 @@
        }
 
        setInterval(process, 33)
+
+       initRecordControls(
+         document.getElementById("final-record"),
+         document.querySelector("canvas#final")
+       )
      }
 
      document.addEventListener("DOMContentLoaded", init)
@@ -111,8 +144,11 @@
     <video autoplay="true"></video>
     <canvas id="work"></canvas>
     <div id="final-wrapper">
+      <div id="final-controls">
+        <button id="final-record"></button>
+        <button id="final-fullscreen">&#8644;</button>
+      </div>
       <canvas id="final"></canvas>
-      <button>&#8644;</button>
     </div>
   </body>
 
