@@ -15,14 +15,20 @@ function* pixelIterator (imageData) {
 }
 
 export function applyPixelFilters(filters, imageData) {
-  for (let [ i, col, row, ...pixel ] of pixelIterator(imageData)) {
-    for (let filter of filters) {
-      pixel = filter(pixel, i, col, row)
-    }
-    imageData.data[i] = pixel[0]
-    imageData.data[i + 1] = pixel[1]
-    imageData.data[i + 2] = pixel[2]
-    imageData.data[i + 3] = pixel[3]
-  }
-  return imageData
+  const NUM_PIXELS = imageData.width * imageData.height
+  const gpu = new GPU()
+  const kernel = gpu.createKernel(function (data) {
+    const i = 4 * (this.thread.x + this.constants.w * (this.constants.h - this.thread.y))
+    const r = data[i]
+    const g = data[i+1]
+    const b = data[i+2]
+    const a = data[i+3]
+    this.color(r / 256, g / 256, b / 256, a / 256)
+  })
+    .setConstants({ w: imageData.width, h: imageData.height })
+    .setOutput([imageData.width, imageData.height])
+    .setGraphical(true)
+
+  kernel(imageData.data)
+  return new ImageData(kernel.getPixels(), imageData.width, imageData.height)
 }
