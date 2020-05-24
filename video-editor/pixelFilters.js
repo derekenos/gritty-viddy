@@ -13,61 +13,38 @@ export function clamp8 (x) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Utility Functions
+// Filter Functions
 ///////////////////////////////////////////////////////////////////////////////
 
-const gpu = new GPU()
 
-// threshold
+// Threshold Filter
 
-export const thresholdFilter = gpu.createKernel(function (data) {
-  const { threshold } = this.constants
-
-  const row = this.thread.y
-  const col = this.thread.x
-  const i = 4 * (col + this.constants.w * (this.constants.h - row))
-  let pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-
+export function thresholdFilter (pixel, threshold) {
   const brightness = calcPixelBrightness(pixel)
   if (brightness >= threshold) {
     pixel = [ 255, 255, 255, 255 ]
   }
   return pixel
-})
-  .setFunctions([ calcPixelBrightness ])
-  .setDynamicOutput(true)
+}
 
 
-// brightnessFilter
+// Brightness Filter
 
-export const brightnessFilter = gpu.createKernel(function (data) {
-  const { factor } = this.constants
-
-  const row = this.thread.y
-  const col = this.thread.x
-  const i = 4 * (col + this.constants.w * (this.constants.h - row))
-  const [ r, g, b, a ] = [ data[i], data[i+1], data[i+2], data[i+3] ]
-
+export function brightnessFilter (pixel, factor) {
+  let [ r, g, b, a ] = pixel
   r = clamp8(r + r * factor)
   g = clamp8(g + g * factor)
   b = clamp8(b + b * factor)
-
   return [ r, g, b, a ]
-})
-  .setFunctions([ clamp8 ])
-  .setDynamicOutput(true)
+}
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Not Ported Yet
-///////////////////////////////////////////////////////////////////////////////
+// Channel Filter
 
-// channel
-
-const channelPixelOffsetMap = { "r": 0, "g": 1, "b": 2, "a": 3 }
-
-export const channelFilter = channels => pixel => {
-  channels.forEach(channel => { pixel[channelPixelOffsetMap[channel]] = 0 })
+export function channelFilter (pixel, r, g, b) {
+  pixel[0] = r ? pixel[0] : 0
+  pixel[1] = g ? pixel[2] : 0
+  pixel[2] = b ? pixel[3] : 0
   return pixel
 }
 
