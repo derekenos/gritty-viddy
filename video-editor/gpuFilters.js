@@ -9,6 +9,16 @@ const gpu = new GPU()
 // Utility Functions
 ///////////////////////////////////////////////////////////////////////////////
 
+// The "this" in these functions will resolve to the kernel that calls it.
+
+function getContext () {
+  const row = this.thread.y
+  const col = this.thread.x
+  const i = 4 * (col + this.constants.w * (this.constants.h - row))
+  return [ i, col, row ]
+}
+
+
 function setColor (pixel) {
   const [ r, g, b, a ] = pixel
   this.color(r / 255, g / 255, b / 255, a / 255)
@@ -23,15 +33,11 @@ function setColor (pixel) {
 
 export const thresholdFilter = ({ threshold }) => gpu.createKernel(function (data) {
   const { threshold } = this.constants
-
-  const row = this.thread.y
-  const col = this.thread.x
-  const i = 4 * (col + this.constants.w * (this.constants.h - row))
-  let pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
   setColor(thresholdFilter(pixel, threshold))
 })
-  .setFunctions([ setColor, PF.calcPixelBrightness, PF.thresholdFilter ])
+  .setFunctions([ getContext, setColor, PF.calcPixelBrightness, PF.thresholdFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
   .setConstants({ threshold })
@@ -41,15 +47,11 @@ export const thresholdFilter = ({ threshold }) => gpu.createKernel(function (dat
 
 export const brightnessFilter = ({ factor }) => gpu.createKernel(function (data) {
   const { factor } = this.constants
-
-  const row = this.thread.y
-  const col = this.thread.x
-  const i = 4 * (col + this.constants.w * (this.constants.h - row))
+  const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-
   setColor(brightnessFilter(pixel, factor))
 })
-  .setFunctions([ setColor, PF.clamp8, PF.brightnessFilter ])
+  .setFunctions([ getContext, setColor, PF.clamp8, PF.brightnessFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
   .setConstants({ factor })
