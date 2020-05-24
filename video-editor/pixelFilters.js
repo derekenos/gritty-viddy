@@ -1,5 +1,7 @@
 
-// utilitiy functions
+///////////////////////////////////////////////////////////////////////////////
+// Utility Functions
+///////////////////////////////////////////////////////////////////////////////
 
 // from: https://stackoverflow.com/a/596241
 export function calcPixelBrightness (pixel) {
@@ -10,6 +12,55 @@ export function clamp8 (x) {
   return Math.max(Math.min(x, 255), 0)
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Utility Functions
+///////////////////////////////////////////////////////////////////////////////
+
+const gpu = new GPU()
+
+// threshold
+
+export const thresholdFilter = gpu.createKernel(function (data) {
+  const { threshold } = this.constants
+
+  const row = this.thread.y
+  const col = this.thread.x
+  const i = 4 * (col + this.constants.w * (this.constants.h - row))
+  let pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+
+  const brightness = calcPixelBrightness(pixel)
+  if (brightness >= threshold) {
+    pixel = [ 255, 255, 255, 255 ]
+  }
+  return pixel
+})
+  .setFunctions([ calcPixelBrightness ])
+  .setDynamicOutput(true)
+
+
+// brightnessFilter
+
+export const brightnessFilter = gpu.createKernel(function (data) {
+  const { factor } = this.constants
+
+  const row = this.thread.y
+  const col = this.thread.x
+  const i = 4 * (col + this.constants.w * (this.constants.h - row))
+  const [ r, g, b, a ] = [ data[i], data[i+1], data[i+2], data[i+3] ]
+
+  r = clamp8(r + r * factor)
+  g = clamp8(g + g * factor)
+  b = clamp8(b + b * factor)
+
+  return [ r, g, b, a ]
+})
+  .setFunctions([ clamp8 ])
+  .setDynamicOutput(true)
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Not Ported Yet
+///////////////////////////////////////////////////////////////////////////////
 
 // channel
 
@@ -18,26 +69,6 @@ const channelPixelOffsetMap = { "r": 0, "g": 1, "b": 2, "a": 3 }
 export const channelFilter = channels => pixel => {
   channels.forEach(channel => { pixel[channelPixelOffsetMap[channel]] = 0 })
   return pixel
-}
-
-
-// threshold
-
-export const thresholdFilter = threshold => pixel => {
-  const brightness = calcPixelBrightness(pixel)
-  return brightness >= threshold ? [ 255, 255, 255, 255 ] : pixel
-}
-
-
-// brightnessFilter
-
-export function brightnessFilter (pixel, i, col, row) {
-  const [ r, g, b, a ] = pixel
-  const { brightnessFilterFactor } = this.constants
-  r = clamp8(r + r * brightnessFilterFactor)
-  g = clamp8(g + g * brightnessFilterFactor)
-  b = clamp8(b + b * brightnessFilterFactor)
-  return [ r, g, b, a ]
 }
 
 
