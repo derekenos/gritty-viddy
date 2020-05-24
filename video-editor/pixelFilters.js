@@ -2,10 +2,13 @@
 // utilitiy functions
 
 // from: https://stackoverflow.com/a/596241
-const calcPixelBrightness = ([ r, g, b, a ]) =>
-  r * 0.299 + g * 0.587 + b * 0.114 * (a / 255)
+export function calcPixelBrightness (pixel) {
+  return pixel[0] * 0.299 + pixel[1] * 0.587 + pixel[2] * 0.114 * (pixel[3] / 255)
+}
 
-const clamp = x => Math.max(Math.min(x, 255), 0)
+export function clamp8 (x) {
+  return Math.max(Math.min(x, 255), 0)
+}
 
 
 // channel
@@ -28,10 +31,12 @@ export const thresholdFilter = threshold => pixel => {
 
 // brightnessFilter
 
-export const brightnessFilter = factor => ([ r, g, b, a ]) => {
-  r = clamp(r + r * factor)
-  g = clamp(g + g * factor)
-  b = clamp(b + b * factor)
+export function brightnessFilter (pixel, i, col, row) {
+  const [ r, g, b, a ] = pixel
+  const { brightnessFilterFactor } = this.constants
+  r = clamp8(r + r * brightnessFilterFactor)
+  g = clamp8(g + g * brightnessFilterFactor)
+  b = clamp8(b + b * brightnessFilterFactor)
   return [ r, g, b, a ]
 }
 
@@ -68,8 +73,9 @@ export const colorReducerFilter = ( mask = 0x80 ) => ([ r, g, b, a ]) => {
 
 // rowBlankerFilter
 
-export const rowBlankerFilter = ( predicate, fill = [ 0, 0, 0, 255 ]) => (pixel, i, col, row) => {
-  return predicate(row) ? fill : pixel
+export function rowBlankerFilter (pixel, i, col, row) {
+  const { rowBlankerFilterNth: nth } = this.constants
+  return row % nth === 0 ? [0, 0, 0, 255] : pixel
 }
 
 

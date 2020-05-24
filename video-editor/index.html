@@ -83,7 +83,7 @@
            video.srcObject = stream
          })
 
-       const canvasScale = 1 / 2
+       const canvasScale = 1
        const workCanvas = document.querySelector("canvas#work")
        workCanvas.width = width * canvasScale
        workCanvas.height = height * canvasScale
@@ -115,12 +115,12 @@
                //thresholdFilter(100),
                //channelFilter([ "r", "g" ]),
                //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
-               colorReducerFilter(0b00111111),
+               //colorReducerFilter(0b00111111),
                //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
                //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
                //colBlankerFilter(row => row % anim.linearInterpolate(2, 16) === 3, [ 0, 0, 0, 255 ]),
                //invertFilter,
-               brightnessFilter(0),
+               brightnessFilter,
              ]
            ),
            0,
