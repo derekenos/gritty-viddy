@@ -46,9 +46,9 @@
      const dumpFrameToCanvas = (video, canvas) =>
        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
 
-     function initRecordControls (button, canvas) {
+     function initRecordControls (button, canvas, audioTrack) {
        button.textContent = "Start Recording"
-       const recorder = new CanvasRecorder(canvas)
+       const recorder = new CanvasRecorder(canvas, audioTrack)
        button.addEventListener("click", e => {
          switch (recorder.state) {
            case "inactive":
@@ -72,10 +72,15 @@
        const width = 1280
        const height = 720
        navigator.mediaDevices
-         .getUserMedia({ video: { width, height } })
+         .getUserMedia({
+           audio: true,
+           video: { width, height },
+         })
          .then(stream => {
            video.srcObject = stream
          })
+       // Mute the video element audio.
+       video.muted = true
 
        const canvasScale = USE_GPU ? 1 : 1 / 4
        const workCanvas = document.querySelector("canvas#work")
@@ -120,9 +125,20 @@
        }
        requestAnimationFrame(process)
 
+       // Get the audio stream
+       // from: https://stackoverflow.com/a/52400024/2327940
+       const ctx = new AudioContext()
+       const dest = ctx.createMediaStreamDestination()
+       const sourceNode = ctx.createMediaElementSource(video)
+       sourceNode.connect(dest);
+       // Uncomment to hear the audio in realtime.
+       // sourceNode.connect(ctx.destination);
+       const audioTrack = dest.stream.getAudioTracks()[0];
+
        initRecordControls(
          document.getElementById("final-record"),
-         document.querySelector("canvas#final")
+         document.querySelector("canvas#final"),
+         audioTrack
        )
      }
 
