@@ -6,8 +6,15 @@ export function applyPixelFilters(filters, imageData) {
   let data = imageData.data
   for (let i = 0; i < numFilters; i += 1) {
     const filter = filters[i]
-    filter.constants.w = imageData.width
-    filter.constants.h = imageData.height
+    if (filter.constants) {
+      filter.constants.w = imageData.width
+      filter.constants.h = imageData.height
+    } else {
+      filter.setConstants({
+        w: imageData.width,
+        h: imageData.height
+      })
+    }
     filter.setOutput([ imageData.width, imageData.height ])
     filter(data)
     data = filter.getPixels()

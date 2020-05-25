@@ -61,15 +61,23 @@ export const brightnessFilter = ({ factor }) => gpu.createKernel(function (data)
 
 export const channelFilter = ({ r, g, b }) => gpu.createKernel(function (data) {
   const { r, g, b } = this.constants
-
-  const row = this.thread.y
-  const col = this.thread.x
-  const i = 4 * (col + this.constants.w * (this.constants.h - row))
+  const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-
   setColor(channelFilter(pixel, r, g, b))
 })
-  .setFunctions([ setColor, PF.channelFilter ])
+  .setFunctions([ getContext, setColor, PF.channelFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
   .setConstants({ r, g, b })
+
+
+// Invert Filter
+
+export const invertFilter = () => gpu.createKernel(function (data) {
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(invertFilter(pixel))
+})
+  .setFunctions([ getContext, setColor, PF.invertFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)

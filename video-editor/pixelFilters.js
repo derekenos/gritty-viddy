@@ -61,11 +61,9 @@ export const colorBalanceFilter = (rVal, gVal, bVal) => ([ r, g, b, a ]) => {
 
 // invertFilter
 
-export const invertFilter = ([ r, g, b, a ]) => {
-  r = 255 - r
-  g = 255 - g
-  b = 255 - b
-  return [ r, g, b, a ]
+export function invertFilter (pixel) {
+  let [ r, g, b, a ] = pixel
+  return [ 255 - r, 255 - g, 255 - b, a ]
 }
 
 

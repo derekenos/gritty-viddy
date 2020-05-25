@@ -41,10 +41,10 @@
        brightnessFilter,
        thresholdFilter,
        channelFilter,
+       invertFilter,
         /* colBlankerFilter,
         * colorBalanceFilter,
         * colorReducerFilter,
-        * invertFilter,
         * rowBlankerFilter, */
      } from "./gpuFilters.js"
 
@@ -114,7 +114,7 @@
          //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
          //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
          //colBlankerFilter(row => row % anim.linearInterpolate(2, 16) === 3, [ 0, 0, 0, 255 ]),
-         //invertFilter,
+         invertFilter(),
          thresholdFilter({ threshold: 128 }),
          brightnessFilter({ factor: 0 }),
          channelFilter({ r: true, g: true, b: true }),
