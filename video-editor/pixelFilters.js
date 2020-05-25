@@ -49,17 +49,7 @@ export function channelFilter (pixel, r, g, b) {
 }
 
 
-// colorBalanceFilter
-
-export const colorBalanceFilter = (rVal, gVal, bVal) => ([ r, g, b, a ]) => {
-  r = clamp(r + rVal)
-  g = clamp(g + gVal)
-  b = clamp(b + bVal)
-  return [ r, g, b, a ]
-}
-
-
-// invertFilter
+// Invert Filter
 
 export function invertFilter (pixel) {
   let [ r, g, b, a ] = pixel
@@ -67,9 +57,22 @@ export function invertFilter (pixel) {
 }
 
 
-// colorReducerFilter
+// Color Balance Filter
 
-export const colorReducerFilter = ( mask = 0x80 ) => ([ r, g, b, a ]) => {
+export function colorBalanceFilter (pixel, rDelta, gDelta, bDelta) {
+  const [ r, g, b, a ] = pixel
+  r = clamp8(r + rDelta)
+  g = clamp8(g + gDelta)
+  b = clamp8(b + bDelta)
+  return [ r, g, b, a ]
+}
+
+
+
+// Color Reducer Filter
+
+export function colorReducerFilter (pixel, mask) {
+  const [ r, g, b, a ] = pixel
   r = r & mask
   g = g & mask
   b = b & mask
@@ -77,16 +80,15 @@ export const colorReducerFilter = ( mask = 0x80 ) => ([ r, g, b, a ]) => {
 }
 
 
-// rowBlankerFilter
+// Row Blanker Filter
 
-export function rowBlankerFilter (pixel, i, col, row) {
-  const { rowBlankerFilterNth: nth } = this.constants
+export function rowBlankerFilter (pixel, nth, row) {
   return row % nth === 0 ? [0, 0, 0, 255] : pixel
 }
 
 
-// colBlankerFilter
+// Col Blanker Filter
 
-export const colBlankerFilter = ( predicate, fill = [ 0, 0, 0, 255 ]) => (pixel, i, col, row) => {
-  return predicate(col) ? fill : pixel
+export function colBlankerFilter (pixel, nth, col) {
+  return col % nth === 0 ? [0, 0, 0, 255] : pixel
 }

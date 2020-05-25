@@ -81,3 +81,59 @@ export const invertFilter = () => gpu.createKernel(function (data) {
   .setFunctions([ getContext, setColor, PF.invertFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
+
+
+// Color Balance Filter
+
+export const colorBalanceFilter = ({ rDelta, gDelta, bDelta }) => gpu.createKernel(function (data) {
+    const { rDelta, gDelta, bDelta } = this.constants
+    const [ i, col, row ] = getContext()
+    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+    setColor(colorBalanceFilter(pixel, rDelta, gDelta, bDelta))
+  })
+    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorBalanceFilter ])
+    .setDynamicOutput(true)
+    .setGraphical(true)
+    .setConstants({ rDelta, gDelta, bDelta })
+
+
+// Color Reducer Filter
+
+export const colorReducerFilter = ({ mask }) => gpu.createKernel(function (data) {
+    const { mask } = this.constants
+    const [ i, col, row ] = getContext()
+    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+    setColor(colorReducerFilter(pixel, mask))
+  })
+    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorReducerFilter ])
+    .setDynamicOutput(true)
+    .setGraphical(true)
+    .setConstants({ mask })
+
+
+// Row Blanker Filter
+
+export const rowBlankerFilter = ({ nth }) => gpu.createKernel(function (data) {
+    const { nth } = this.constants
+    const [ i, col, row ] = getContext()
+    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+    setColor(rowBlankerFilter(pixel, nth, row))
+  })
+    .setFunctions([ getContext, setColor, PF.clamp8, PF.rowBlankerFilter ])
+    .setDynamicOutput(true)
+    .setGraphical(true)
+    .setConstants({ nth })
+
+
+// Col Blanker Filter
+
+export const colBlankerFilter = ({ nth }) => gpu.createKernel(function (data) {
+    const { nth } = this.constants
+    const [ i, col, row ] = getContext()
+    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+    setColor(colBlankerFilter(pixel, nth, col))
+  })
+    .setFunctions([ getContext, setColor, PF.clamp8, PF.colBlankerFilter ])
+    .setDynamicOutput(true)
+    .setGraphical(true)
+    .setConstants({ nth })

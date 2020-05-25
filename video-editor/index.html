@@ -42,10 +42,10 @@
        thresholdFilter,
        channelFilter,
        invertFilter,
-        /* colBlankerFilter,
-        * colorBalanceFilter,
-        * colorReducerFilter,
-        * rowBlankerFilter, */
+       colorBalanceFilter,
+       colorReducerFilter,
+       rowBlankerFilter,
+       colBlankerFilter,
      } from "./gpuFilters.js"
 
      const dumpFrameToCanvas = (video, canvas) =>
@@ -107,17 +107,14 @@
        }
 
        const filters = [
-         //thresholdFilter(100),
-         //channelFilter([ "r", "g" ]),
-         //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
-         //colorReducerFilter(0b00111111),
-         //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
-         //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
-         //colBlankerFilter(row => row % anim.linearInterpolate(2, 16) === 3, [ 0, 0, 0, 255 ]),
+         //thresholdFilter({ threshold: 128 }),
+         brightnessFilter({ factor: 1 }),
+         //channelFilter({ r: true, g: true, b: true }),
+         //colorBalanceFilter({ rDelta: 32, gDelta: 0, bDelta: -32 }),
+         //colorReducerFilter({ mask: 0x40 }),
+         rowBlankerFilter({ nth: 2 }),
+         colBlankerFilter({ nth: 2 }),
          invertFilter(),
-         thresholdFilter({ threshold: 128 }),
-         brightnessFilter({ factor: 0 }),
-         channelFilter({ r: true, g: true, b: true }),
        ]
 
        function process () {
