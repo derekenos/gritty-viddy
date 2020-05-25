@@ -17,14 +17,14 @@ export function clamp8 (x) {
 function* pixelIterator (imageData) {
   const maxI = imageData.width * imageData.height * 4
   const data = imageData.data
-  let row = 0
+  let row = imageData.height - 1
   let col = 0
   for (let i = 0; i < maxI; i += 4) {
     const pixel = [ data[i], data[i + 1], data[i + 2], data[i + 3] ]
     yield [ i, col, row, pixel ]
     col += 1
     if (col === imageData.width) {
-      row += 1
+      row -= 1
       col = 0
     }
   }
@@ -34,7 +34,7 @@ function* pixelIterator (imageData) {
 export function applyFilters (filters, imageData) {
   for (let [ i, col, row, pixel] of pixelIterator(imageData)) {
     for (let [ filter, params ] of filters) {
-      pixel = filter(pixel, params, i, col, row)
+      pixel = filter(pixel, params, i, col, row, imageData.width, imageData.height)
     }
     imageData.data[i] = pixel[0]
     imageData.data[i + 1] = pixel[1]
@@ -52,7 +52,7 @@ export function applyFilters (filters, imageData) {
 
 // Threshold Filter
 
-export function thresholdFilter (pixel, params, i, col, row) {
+export function thresholdFilter (pixel, params, i, col, row, width, height) {
   const [ threshold ] = params
   const brightness = calcPixelBrightness(pixel)
   if (brightness >= threshold) {
@@ -64,7 +64,7 @@ export function thresholdFilter (pixel, params, i, col, row) {
 
 // Brightness Filter
 
-export function brightnessFilter (pixel, params, i, col, row) {
+export function brightnessFilter (pixel, params, i, col, row, width, height) {
   let [ r, g, b, a ] = pixel
   const [ factor ] = params
   r = clamp8(r + r * factor)
@@ -76,7 +76,7 @@ export function brightnessFilter (pixel, params, i, col, row) {
 
 // Channel Filter
 
-export function channelFilter (pixel, params, i, col, row) {
+export function channelFilter (pixel, params, i, col, row, width, height) {
   const [ keepR, keepG, keepB ] = params
   pixel[0] = keepR === 0 ? 0 : pixel[0]
   pixel[1] = keepG === 0 ? 0 : pixel[1]
@@ -87,7 +87,7 @@ export function channelFilter (pixel, params, i, col, row) {
 
 // Color Gain Filter
 
-export function colorGainFilter (pixel, params, i, col, row) {
+export function colorGainFilter (pixel, params, i, col, row, width, height) {
   let [ r, g, b, a ] = pixel
   const [ rGain, gGain, bGain ] = params
   r = clamp8(r + r * rGain)
@@ -100,7 +100,7 @@ export function colorGainFilter (pixel, params, i, col, row) {
 
 // Color Reducer Filter
 
-export function colorReducerFilter (pixel, params, i, col, row) {
+export function colorReducerFilter (pixel, params, i, col, row, width, height) {
   let [ r, g, b, a ] = pixel
   const [ mask ] = params
   r = r & mask
@@ -112,7 +112,7 @@ export function colorReducerFilter (pixel, params, i, col, row) {
 
 // Row Blanker Filter
 
-export function rowBlankerFilter (pixel, params, i, col, row) {
+export function rowBlankerFilter (pixel, params, i, col, row, width, height) {
   const [ nth ] = params
   return row % nth === 0 ? [0, 0, 0, 255] : pixel
 }
@@ -120,7 +120,7 @@ export function rowBlankerFilter (pixel, params, i, col, row) {
 
 // Col Blanker Filter
 
-export function colBlankerFilter (pixel, params, i, col, row) {
+export function colBlankerFilter (pixel, params, i, col, row, width, height) {
   const [ nth ] = params
   return col % nth === 0 ? [0, 0, 0, 255] : pixel
 }
@@ -128,7 +128,17 @@ export function colBlankerFilter (pixel, params, i, col, row) {
 
 // Invert Filter
 
-export function invertFilter (pixel, params, i, col, row) {
+export function invertFilter (pixel, params, i, col, row, width, height) {
   let [ r, g, b, a ] = pixel
   return [ 255 - r, 255 - g, 255 - b, a ]
+}
+
+
+// Y-Plot Filter
+
+export function audioPlotFilter (pixel, params, i, col, row, width, height) {
+  // params is an array of audio samples in the range 0 - 1.
+  const [ r, g, b, a ] = pixel
+  const d = ((row / height) >= params[col]) ? 64 : -64
+  return [ clamp8(r + d), clamp8(g + d), 255 - b, a ]
 }

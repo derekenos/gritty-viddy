@@ -6,8 +6,8 @@
     <style>
      video,
      canvas {
-       width: 1280px;
-       height: 720px;
+       width: 1280;
+       height: 720;
        border: solid #000 1px;
        display: none;
      }
@@ -40,8 +40,17 @@
      import * as CPU_FILTERS from "./filters.js"
      import * as GPU_FILTERS from "./gpuFilters.js"
 
+
      const USE_GPU = true
      const FILTERS = USE_GPU ? GPU_FILTERS : CPU_FILTERS
+
+     const SOURCE_WIDTH = 1280
+     const SOURCE_HEIGHT = 720
+
+     const FINAL_SCALE = USE_GPU ? 1 : 1 / 4
+     const FINAL_WIDTH = SOURCE_WIDTH * FINAL_SCALE
+     const FINAL_HEIGHT = SOURCE_HEIGHT * FINAL_SCALE
+
 
      const dumpFrameToCanvas = (video, canvas) =>
        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
@@ -69,12 +78,10 @@
      function init () {
        // Start video stream.
        const video = document.querySelector("video")
-       const width = 1280
-       const height = 720
        navigator.mediaDevices
          .getUserMedia({
            audio: true,
-           video: { width, height },
+           video: { width: SOURCE_WIDTH, height: SOURCE_HEIGHT },
          })
          .then(stream => {
            video.srcObject = stream
@@ -97,15 +104,13 @@
        //sourceNode.connect(audioCtx.destination);
        const audioTrack = dest.stream.getAudioTracks()[0]
 
-
-       const canvasScale = USE_GPU ? 1 : 1 / 4
        const workCanvas = document.querySelector("canvas#work")
-       workCanvas.width = width * canvasScale
-       workCanvas.height = height * canvasScale
+       workCanvas.width = FINAL_WIDTH
+       workCanvas.height = FINAL_HEIGHT
        const workCanvasCtx = workCanvas.getContext("2d")
        const finalCanvas = document.querySelector("canvas#final")
-       finalCanvas.width = width * canvasScale
-       finalCanvas.height = height * canvasScale
+       finalCanvas.width = FINAL_WIDTH
+       finalCanvas.height = FINAL_HEIGHT
        const finalCanvasCtx = finalCanvas.getContext("2d")
 
        // Add fullscreen button handler.
@@ -126,26 +131,40 @@
        const anim = Animator({ stepsPerCycle: 50, oneShot: false })
        const audioBuffer = new Uint8Array(audioAnalyser.fftSize)
 
-       function process () {
-         // Calculate the audio loudness.
+       function getAudioParams () {
+         // Get the audio sample data.
          audioAnalyser.getByteTimeDomainData(audioBuffer)
+         // Calculate the average loudness as a float in the range 0 - 1
          const positiveAudioSamples = audioBuffer.filter(x => x > 128)
-         const audioLevel = !positiveAudioSamples.length
+         const normalizedLoudness = !positiveAudioSamples.length
            ? 0
            : positiveAudioSamples.reduce((acc, x) => acc + (x - 128) / 128, 0) / positiveAudioSamples.length
+         // Scale the audio samples to floats in the range 0 - 1 and
+         const normalizedSamples = new Array(...audioBuffer).map(x => x / 255)
+         let scaledNormalizedSamples = []
+         const idxFactor = Math.floor(normalizedSamples.length / FINAL_WIDTH)
+         for (let i = 0; i < FINAL_WIDTH; i += 1) {
+           scaledNormalizedSamples.push(normalizedSamples[i * idxFactor])
+         }
+
+         return { normalizedLoudness, scaledNormalizedSamples }
+       }
+
+       function process () {
+         const { normalizedLoudness, scaledNormalizedSamples } = getAudioParams()
 
          const filters = [
-           //[ FILTERS.thresholdFilter, [ Math.floor(anim.linearInterpolate( 128, 255 )) ] ],
-           [ FILTERS.brightnessFilter, [ 1 + audioLevel * 5] ],
+           //[ FILTERS.thresholdFilter, [ 255 - audioLevel * 4 * 255 ] ],
+           //[ FILTERS.brightnessFilter, [ 1 + audioLevel * 5] ],
            //[ FILTERS.channelFilter, [ 1, 1, 1 ] ],
-           //[ FILTERS.colorReducerFilter, [ 0xc0 ] ],
+           //[ FILTERS.colorReducerFilter, [ 0x80 ] ],
            //[ FILTERS.rowBlankerFilter, [ Math.floor(anim.linearInterpolate( 2, 32 )) ] ],
            //[ FILTERS.colBlankerFilter, [ 8 ] ],
-           //[ FILTERS.colorGainFilter, [ -1, 0, 1 ] ],
+           //[ FILTERS.colorGainFilter, [ 0, 0, audioLevel * 10 ] ],
+           //[ FILTERS.invertFilter, [] ]
+           // TODO - scale audioBuffer to image width
+           [ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
          ]
-         if (audioLevel > 0.2) {
-           filters.push([ FILTERS.invertFilter, [] ])
-         }
          finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
          anim.step()
          requestAnimationFrame(process)

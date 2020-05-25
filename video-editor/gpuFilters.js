@@ -1,5 +1,5 @@
 
-import  *  as PF from "./filters.js"
+import  *  as FILTERS from "./filters.js"
 
 
 const gpu = new GPU()
@@ -54,11 +54,12 @@ function setColor (pixel) {
 // Threshold Filter
 
 export const thresholdFilter = gpu.createKernel(function (data, params) {
+  const { w, h } = this.constants
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(thresholdFilter(pixel, params, i, col, row))
+  setColor(thresholdFilter(pixel, params, i, col, row, w, h))
 })
-  .setFunctions([ getContext, setColor, PF.calcPixelBrightness, PF.thresholdFilter ])
+  .setFunctions([ getContext, setColor, FILTERS.calcPixelBrightness, FILTERS.thresholdFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
 
@@ -66,11 +67,12 @@ export const thresholdFilter = gpu.createKernel(function (data, params) {
 // Brightness Filter
 
 export const brightnessFilter = gpu.createKernel(function (data, params) {
+  const { w, h } = this.constants
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(brightnessFilter(pixel, params, i, col, row))
+  setColor(brightnessFilter(pixel, params, i, col, row, w, h))
 })
-  .setFunctions([ getContext, setColor, PF.clamp8, PF.brightnessFilter ])
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.brightnessFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
 
@@ -78,11 +80,12 @@ export const brightnessFilter = gpu.createKernel(function (data, params) {
 // Channel Filter
 
 export const channelFilter = gpu.createKernel(function (data, params) {
+  const { w, h } = this.constants
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(channelFilter(pixel, params, i, col, row))
+  setColor(channelFilter(pixel, params, i, col, row, w, h))
 })
-  .setFunctions([ getContext, setColor, PF.channelFilter ])
+  .setFunctions([ getContext, setColor, FILTERS.channelFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
 
@@ -90,58 +93,76 @@ export const channelFilter = gpu.createKernel(function (data, params) {
 // Color Gain Filter
 
 export const colorGainFilter = gpu.createKernel(function (data, params) {
-    const [ i, col, row ] = getContext()
-    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colorGainFilter(pixel, params, i, col, row))
-  })
-    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorGainFilter ])
-    .setDynamicOutput(true)
-    .setGraphical(true)
+  const { w, h } = this.constants
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(colorGainFilter(pixel, params, i, col, row, w, h))
+})
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.colorGainFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
 
 
 // Color Reducer Filter
 
 export const colorReducerFilter = gpu.createKernel(function (data, params) {
-    const [ i, col, row ] = getContext()
-    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colorReducerFilter(pixel, params, i, col, row))
-  })
-    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorReducerFilter ])
-    .setDynamicOutput(true)
-    .setGraphical(true)
+  const { w, h } = this.constants
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(colorReducerFilter(pixel, params, i, col, row, w, h))
+})
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.colorReducerFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
 
 
 // Row Blanker Filter
 
 export const rowBlankerFilter = gpu.createKernel(function (data, params) {
-    const [ i, col, row ] = getContext()
-    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(rowBlankerFilter(pixel, params, i, col, row))
-  })
-    .setFunctions([ getContext, setColor, PF.clamp8, PF.rowBlankerFilter ])
-    .setDynamicOutput(true)
-    .setGraphical(true)
+  const { w, h } = this.constants
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(rowBlankerFilter(pixel, params, i, col, row, w, h))
+})
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.rowBlankerFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
 
 
 // Col Blanker Filter
 
 export const colBlankerFilter = gpu.createKernel(function (data, params) {
-    const [ i, col, row ] = getContext()
-    const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colBlankerFilter(pixel, params, i, col, row))
-  })
-    .setFunctions([ getContext, setColor, PF.clamp8, PF.colBlankerFilter ])
-    .setDynamicOutput(true)
-    .setGraphical(true)
+  const { w, h } = this.constants
+   const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(colBlankerFilter(pixel, params, i, col, row, w, h))
+})
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.colBlankerFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
 
 
 // Invert Filter
 
 export const invertFilter = gpu.createKernel(function (data, params) {
+  const { w, h } = this.constants
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(invertFilter(pixel, params, i, col, row))
+  setColor(invertFilter(pixel, params, i, col, row, w, h))
 })
-  .setFunctions([ getContext, setColor, PF.invertFilter ])
+  .setFunctions([ getContext, setColor, FILTERS.invertFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
+
+
+// Y-Plot Filter
+
+export const audioPlotFilter = gpu.createKernel(function (data, params) {
+  const { w, h } = this.constants
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(audioPlotFilter(pixel, params, i, col, row, w, h))
+})
+  .setFunctions([ getContext, setColor, FILTERS.clamp8, FILTERS.audioPlotFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
