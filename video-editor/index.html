@@ -79,8 +79,24 @@
          .then(stream => {
            video.srcObject = stream
          })
-       // Mute the video element audio.
+
+       // Mute the video audio and get its audio stream
        video.muted = true
+       // from: https://stackoverflow.com/a/52400024/2327940
+       const audioCtx = new AudioContext()
+       const dest = audioCtx.createMediaStreamDestination()
+       const sourceNode = audioCtx.createMediaElementSource(video)
+
+       // Create an audioAnalyzer node so that we can use audio as an
+       // input to the video filters.
+       const audioAnalyser = audioCtx.createAnalyser()
+       sourceNode.connect(audioAnalyser)
+       audioAnalyser.connect(dest)
+
+       // Uncomment to hear the audio in realtime.
+       //sourceNode.connect(audioCtx.destination);
+       const audioTrack = dest.stream.getAudioTracks()[0]
+
 
        const canvasScale = USE_GPU ? 1 : 1 / 4
        const workCanvas = document.querySelector("canvas#work")
@@ -106,34 +122,35 @@
          return imageData
        }
 
+       // Configure the things we'll use to control dynamic video effects.
        const anim = Animator({ stepsPerCycle: 50, oneShot: false })
+       const audioBuffer = new Uint8Array(audioAnalyser.fftSize)
 
        function process () {
+         // Calculate the audio loudness.
+         audioAnalyser.getByteTimeDomainData(audioBuffer)
+         const positiveAudioSamples = audioBuffer.filter(x => x > 128)
+         const audioLevel = !positiveAudioSamples.length
+           ? 0
+           : positiveAudioSamples.reduce((acc, x) => acc + (x - 128) / 128, 0) / positiveAudioSamples.length
+
          const filters = [
-           [ FILTERS.thresholdFilter, [ Math.floor(anim.linearInterpolate( 128, 255 )) ] ],
-           [ FILTERS.brightnessFilter, [ anim.linearInterpolate( 1, 6 ) ] ],
+           //[ FILTERS.thresholdFilter, [ Math.floor(anim.linearInterpolate( 128, 255 )) ] ],
+           [ FILTERS.brightnessFilter, [ 1 + audioLevel * 5] ],
            //[ FILTERS.channelFilter, [ 1, 1, 1 ] ],
            //[ FILTERS.colorReducerFilter, [ 0xc0 ] ],
-           [ FILTERS.invertFilter, [] ],
-           [ FILTERS.rowBlankerFilter, [ Math.floor(anim.linearInterpolate( 2, 32 )) ] ],
-           [ FILTERS.colBlankerFilter, [ 8 ] ],
-           [ FILTERS.colorGainFilter, [ -1, 0, 1 ] ],
+           //[ FILTERS.rowBlankerFilter, [ Math.floor(anim.linearInterpolate( 2, 32 )) ] ],
+           //[ FILTERS.colBlankerFilter, [ 8 ] ],
+           //[ FILTERS.colorGainFilter, [ -1, 0, 1 ] ],
          ]
+         if (audioLevel > 0.2) {
+           filters.push([ FILTERS.invertFilter, [] ])
+         }
          finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
          anim.step()
          requestAnimationFrame(process)
        }
        requestAnimationFrame(process)
-
-       // Get the audio stream
-       // from: https://stackoverflow.com/a/52400024/2327940
-       const ctx = new AudioContext()
-       const dest = ctx.createMediaStreamDestination()
-       const sourceNode = ctx.createMediaElementSource(video)
-       sourceNode.connect(dest);
-       // Uncomment to hear the audio in realtime.
-       // sourceNode.connect(ctx.destination);
-       const audioTrack = dest.stream.getAudioTracks()[0];
 
        initRecordControls(
          document.getElementById("final-record"),
