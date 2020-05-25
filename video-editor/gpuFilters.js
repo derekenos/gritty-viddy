@@ -1,12 +1,34 @@
 
-import  *  as PF from "./pixelFilters.js"
+import  *  as PF from "./filters.js"
 
 
 const gpu = new GPU()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Utility Functions
+// General Utility Functions
+///////////////////////////////////////////////////////////////////////////////
+
+export function applyFilters(filters, imageData) {
+  const numFilters = filters.length
+  let data = imageData.data
+  for (let i = 0; i < numFilters; i += 1) {
+    const [ filter, params ] = filters[i]
+    filter.setOutput([ imageData.width, imageData.height ])
+    filter.setConstants({
+      w: imageData.width,
+      h: imageData.height,
+    })
+    // gpu.js doesn't like when params is an empty array, so make it non-empty.
+    filter(data, params.length ? params : [0])
+    data = filter.getPixels()
+  }
+  return new ImageData(data, imageData.width, imageData.height)
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Kernel Utility Functions
 ///////////////////////////////////////////////////////////////////////////////
 
 // The "this" in these functions will resolve to the kernel that calls it.
@@ -31,109 +53,95 @@ function setColor (pixel) {
 
 // Threshold Filter
 
-export const thresholdFilter = ({ threshold }) => gpu.createKernel(function (data) {
-  const { threshold } = this.constants
+export const thresholdFilter = gpu.createKernel(function (data, params) {
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(thresholdFilter(pixel, threshold))
+  setColor(thresholdFilter(pixel, params, i, col, row))
 })
   .setFunctions([ getContext, setColor, PF.calcPixelBrightness, PF.thresholdFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
-  .setConstants({ threshold })
 
 
 // Brightness Filter
 
-export const brightnessFilter = ({ factor }) => gpu.createKernel(function (data) {
-  const { factor } = this.constants
+export const brightnessFilter = gpu.createKernel(function (data, params) {
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(brightnessFilter(pixel, factor))
+  setColor(brightnessFilter(pixel, params, i, col, row))
 })
   .setFunctions([ getContext, setColor, PF.clamp8, PF.brightnessFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
-  .setConstants({ factor })
 
 
 // Channel Filter
 
-export const channelFilter = ({ r, g, b }) => gpu.createKernel(function (data) {
-  const { r, g, b } = this.constants
+export const channelFilter = gpu.createKernel(function (data, params) {
   const [ i, col, row ] = getContext()
   const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(channelFilter(pixel, r, g, b))
+  setColor(channelFilter(pixel, params, i, col, row))
 })
   .setFunctions([ getContext, setColor, PF.channelFilter ])
   .setDynamicOutput(true)
   .setGraphical(true)
-  .setConstants({ r, g, b })
 
 
-// Invert Filter
+// Color Gain Filter
 
-export const invertFilter = () => gpu.createKernel(function (data) {
-  const [ i, col, row ] = getContext()
-  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-  setColor(invertFilter(pixel))
-})
-  .setFunctions([ getContext, setColor, PF.invertFilter ])
-  .setDynamicOutput(true)
-  .setGraphical(true)
-
-
-// Color Balance Filter
-
-export const colorBalanceFilter = ({ rDelta, gDelta, bDelta }) => gpu.createKernel(function (data) {
-    const { rDelta, gDelta, bDelta } = this.constants
+export const colorGainFilter = gpu.createKernel(function (data, params) {
     const [ i, col, row ] = getContext()
     const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colorBalanceFilter(pixel, rDelta, gDelta, bDelta))
+    setColor(colorGainFilter(pixel, params, i, col, row))
   })
-    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorBalanceFilter ])
+    .setFunctions([ getContext, setColor, PF.clamp8, PF.colorGainFilter ])
     .setDynamicOutput(true)
     .setGraphical(true)
-    .setConstants({ rDelta, gDelta, bDelta })
 
 
 // Color Reducer Filter
 
-export const colorReducerFilter = ({ mask }) => gpu.createKernel(function (data) {
-    const { mask } = this.constants
+export const colorReducerFilter = gpu.createKernel(function (data, params) {
     const [ i, col, row ] = getContext()
     const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colorReducerFilter(pixel, mask))
+    setColor(colorReducerFilter(pixel, params, i, col, row))
   })
     .setFunctions([ getContext, setColor, PF.clamp8, PF.colorReducerFilter ])
     .setDynamicOutput(true)
     .setGraphical(true)
-    .setConstants({ mask })
 
 
 // Row Blanker Filter
 
-export const rowBlankerFilter = ({ nth }) => gpu.createKernel(function (data) {
-    const { nth } = this.constants
+export const rowBlankerFilter = gpu.createKernel(function (data, params) {
     const [ i, col, row ] = getContext()
     const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(rowBlankerFilter(pixel, nth, row))
+    setColor(rowBlankerFilter(pixel, params, i, col, row))
   })
     .setFunctions([ getContext, setColor, PF.clamp8, PF.rowBlankerFilter ])
     .setDynamicOutput(true)
     .setGraphical(true)
-    .setConstants({ nth })
 
 
 // Col Blanker Filter
 
-export const colBlankerFilter = ({ nth }) => gpu.createKernel(function (data) {
-    const { nth } = this.constants
+export const colBlankerFilter = gpu.createKernel(function (data, params) {
     const [ i, col, row ] = getContext()
     const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
-    setColor(colBlankerFilter(pixel, nth, col))
+    setColor(colBlankerFilter(pixel, params, i, col, row))
   })
     .setFunctions([ getContext, setColor, PF.clamp8, PF.colBlankerFilter ])
     .setDynamicOutput(true)
     .setGraphical(true)
-    .setConstants({ nth })
+
+
+// Invert Filter
+
+export const invertFilter = gpu.createKernel(function (data, params) {
+  const [ i, col, row ] = getContext()
+  const pixel = [ data[i], data[i+1], data[i+2], data[i+3] ]
+  setColor(invertFilter(pixel, params, i, col, row))
+})
+  .setFunctions([ getContext, setColor, PF.invertFilter ])
+  .setDynamicOutput(true)
+  .setGraphical(true)
