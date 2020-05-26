@@ -9,7 +9,11 @@
        width: 1280;
        height: 720;
        border: solid #000 1px;
-       display: none;
+       /* positioning absolutely to make the video element on-screen
+          but hidden by the final canvas so that Chrome will actually
+          play the video.
+        */
+       position: absolute;
      }
 
      #final-wrapper {
@@ -27,8 +31,8 @@
        cursor: pointer;
      }
 
-     canvas#final {
-       display: block;
+     canvas#work {
+       display: none;
      }
     </style>
 
@@ -68,17 +72,16 @@
            video: { width: SOURCE_WIDTH, height: SOURCE_HEIGHT },
          })
 
-       // Mute the video audio and get its audio stream
-       video.muted = true
+       // Get the audio stream.
        // from: https://stackoverflow.com/a/52400024/2327940
        const audioCtx = new AudioContext()
-       const dest = audioCtx.createMediaStreamDestination()
        const sourceNode = audioCtx.createMediaElementSource(video)
 
        // Create an audioAnalyzer node so that we can use audio as an
        // input to the video filters.
        const audioAnalyser = audioCtx.createAnalyser()
        sourceNode.connect(audioAnalyser)
+       const dest = audioCtx.createMediaStreamDestination()
        audioAnalyser.connect(dest)
 
        // Uncomment to hear the audio in realtime.
@@ -204,7 +207,7 @@
   </head>
 
   <body>
-    <video autoplay="true"></video>
+    <video autoplay="true" muted></video>
     <canvas id="work"></canvas>
     <div id="final-wrapper">
       <div id="final-controls">
