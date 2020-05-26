@@ -32,14 +32,18 @@
      }
     </style>
 
+    <!-- Include gpu.js -->
     <script src="ext/gpu-browser.min.js"></script>
 
     <script type="module">
-     import Animator from "./animator.js"
      import CanvasRecorder from "./CanvasRecorder.js"
      import * as CPU_FILTERS from "./filters.js"
      import * as GPU_FILTERS from "./gpuFilters.js"
 
+
+     ///////////////////////////////////////////////////////////////////////////////
+     // Constants
+     ///////////////////////////////////////////////////////////////////////////////
 
      const USE_GPU = true
      const FILTERS = USE_GPU ? GPU_FILTERS : CPU_FILTERS
@@ -52,39 +56,16 @@
      const FINAL_HEIGHT = SOURCE_HEIGHT * FINAL_SCALE
 
 
-     const dumpFrameToCanvas = (video, canvas) =>
-       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
+     ///////////////////////////////////////////////////////////////////////////////
+     // Utility Functions
+     ///////////////////////////////////////////////////////////////////////////////
 
-     function initRecordControls (button, canvas, audioTrack) {
-       button.textContent = "Start Recording"
-       const recorder = new CanvasRecorder(canvas, audioTrack)
-       button.addEventListener("click", e => {
-         switch (recorder.state) {
-           case "inactive":
-             recorder.start()
-             e.target.textContent = "Stop Recording"
-             break
-           case "recording":
-             recorder.stop()
-             e.target.textContent = "Start Recording"
-             break
-           default:
-             throw new Error(`Unhandled recorder state: ${recorder.state}`)
-             break
-         }
-       })
-     }
-
-     function init () {
-       // Start video stream.
+     async function initInputStreams () {
        const video = document.querySelector("video")
-       navigator.mediaDevices
+       video.srcObject = await navigator.mediaDevices
          .getUserMedia({
            audio: true,
            video: { width: SOURCE_WIDTH, height: SOURCE_HEIGHT },
-         })
-         .then(stream => {
-           video.srcObject = stream
          })
 
        // Mute the video audio and get its audio stream
@@ -104,78 +85,117 @@
        //sourceNode.connect(audioCtx.destination);
        const audioTrack = dest.stream.getAudioTracks()[0]
 
+       return { video, audioTrack, audioAnalyser }
+     }
+
+     async function configureCanvi (audioTrack) {
        const workCanvas = document.querySelector("canvas#work")
        workCanvas.width = FINAL_WIDTH
        workCanvas.height = FINAL_HEIGHT
-       const workCanvasCtx = workCanvas.getContext("2d")
        const finalCanvas = document.querySelector("canvas#final")
        finalCanvas.width = FINAL_WIDTH
        finalCanvas.height = FINAL_HEIGHT
-       const finalCanvasCtx = finalCanvas.getContext("2d")
 
-       // Add fullscreen button handler.
+       // Add final canvas fullscreen button handler.
        document.getElementById("final-fullscreen")
          .addEventListener("click", () => {
            finalCanvas.requestFullscreen()
          })
 
-       function getProcessedImageData (filters = []) {
-         dumpFrameToCanvas(video, workCanvas)
-         const ctx = workCanvas.getContext("2d")
-         let imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height)
-         imageData = FILTERS.applyFilters(filters, imageData)
-         return imageData
-       }
+       // Init the CanvasRecorder and configure the record button.
+       const button = document.getElementById("final-record")
+       button.textContent = "Start Recording"
+       // Firefox complains that something isn't initialized if I try to
+       // instantiate the CanvasRecorder here, so I deferred it.
+       let recorder
+       button.addEventListener("click", e => {
+         if (recorder === undefined) {
+           recorder = new CanvasRecorder(finalCanvas, audioTrack)
+         }
+         switch (recorder.state) {
+           case "inactive":
+             recorder.start()
+             e.target.textContent = "Stop Recording"
+             break
+           case "recording":
+             recorder.stop()
+             e.target.textContent = "Start Recording"
+             break
+           default:
+             throw new Error(`Unhandled recorder state: ${recorder.state}`)
+             break
+         }
+       })
 
-       // Configure the things we'll use to control dynamic video effects.
-       const anim = Animator({ stepsPerCycle: 50, oneShot: false })
+       return { workCanvas, finalCanvas }
+     }
+
+     function getAudioParams (audioAnalyser, audioBuffer) {
+       // Get the audio sample data.
+       audioAnalyser.getByteTimeDomainData(audioBuffer)
+       // Calculate the average loudness as a float in the range 0 - 1
+       const positiveAudioSamples = audioBuffer.filter(x => x > 128)
+       const normalizedLoudness = !positiveAudioSamples.length
+         ? 0
+         : positiveAudioSamples.reduce((acc, x) => acc + (x - 128) / 128, 0) / positiveAudioSamples.length
+       // Scale the audio samples to floats in the range 0 - 1 and
+       const normalizedSamples = new Array(...audioBuffer).map(x => x / 255)
+       let scaledNormalizedSamples = []
+       const idxFactor = Math.floor(normalizedSamples.length / FINAL_WIDTH)
+       for (let i = 0; i < FINAL_WIDTH; i += 1) {
+         scaledNormalizedSamples.push(normalizedSamples[i * idxFactor])
+       }
+       return { normalizedLoudness, scaledNormalizedSamples }
+     }
+
+     async function init () {
+       const { video, audioTrack, audioAnalyser } = await initInputStreams()
+       // Create a buffer to use for sampling the audio.
        const audioBuffer = new Uint8Array(audioAnalyser.fftSize)
 
-       function getAudioParams () {
-         // Get the audio sample data.
-         audioAnalyser.getByteTimeDomainData(audioBuffer)
-         // Calculate the average loudness as a float in the range 0 - 1
-         const positiveAudioSamples = audioBuffer.filter(x => x > 128)
-         const normalizedLoudness = !positiveAudioSamples.length
-           ? 0
-           : positiveAudioSamples.reduce((acc, x) => acc + (x - 128) / 128, 0) / positiveAudioSamples.length
-         // Scale the audio samples to floats in the range 0 - 1 and
-         const normalizedSamples = new Array(...audioBuffer).map(x => x / 255)
-         let scaledNormalizedSamples = []
-         const idxFactor = Math.floor(normalizedSamples.length / FINAL_WIDTH)
-         for (let i = 0; i < FINAL_WIDTH; i += 1) {
-           scaledNormalizedSamples.push(normalizedSamples[i * idxFactor])
-         }
+       const { workCanvas, finalCanvas } = await configureCanvi(audioTrack)
+       const workCtx = workCanvas.getContext("2d")
+       const finalCtx = finalCanvas.getContext("2d")
 
-         return { normalizedLoudness, scaledNormalizedSamples }
+       function getProcessedImageData (filters = []) {
+         // Capture a frame from the video and draw it to the work canvas.
+         workCtx.drawImage(video, 0, 0, workCanvas.width, workCanvas.height)
+         // Get the pixel data from the work canvas.
+         let imageData = workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height)
+         // Apply the filters to the pixel data and return the result.
+         return FILTERS.applyFilters(filters, imageData)
        }
 
        function process () {
-         const { normalizedLoudness, scaledNormalizedSamples } = getAudioParams()
+         // Get audio data that we can use to modify the filter parameters.
+         const {
+           normalizedLoudness,
+           scaledNormalizedSamples
+         } = getAudioParams(audioAnalyser, audioBuffer)
 
+         // Define the filter chain.
          const filters = [
-           //[ FILTERS.thresholdFilter, [ 255 - audioLevel * 4 * 255 ] ],
-           //[ FILTERS.brightnessFilter, [ 1 + audioLevel * 5] ],
+           //[ FILTERS.thresholdFilter, [ 255 - normalizedLoudness * 4 * 255 ] ],
+           //[ FILTERS.brightnessFilter, [ 0 + normalizedLoudness * 10] ],
            //[ FILTERS.channelFilter, [ 1, 1, 1 ] ],
            //[ FILTERS.colorReducerFilter, [ 0x80 ] ],
-           //[ FILTERS.rowBlankerFilter, [ Math.floor(anim.linearInterpolate( 2, 32 )) ] ],
+           //[ FILTERS.rowBlankerFilter, [ 2 ] ],
            //[ FILTERS.colBlankerFilter, [ 8 ] ],
-           //[ FILTERS.colorGainFilter, [ 0, 0, audioLevel * 10 ] ],
+           //[ FILTERS.colorGainFilter, [ 0, 0, normalizedLoudness * 10 ] ],
            //[ FILTERS.invertFilter, [] ]
-           // TODO - scale audioBuffer to image width
            [ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
          ]
-         finalCanvasCtx.putImageData(getProcessedImageData(filters), 0, 0)
-         anim.step()
+
+         // Use the filters to process the image and write the result to
+         // the final canvas.
+         finalCtx.putImageData(getProcessedImageData(filters), 0, 0)
+
+         // Repeat the process on the next animation frame.
          requestAnimationFrame(process)
        }
-       requestAnimationFrame(process)
 
-       initRecordControls(
-         document.getElementById("final-record"),
-         document.querySelector("canvas#final"),
-         audioTrack
-       )
+       // Get the process started.
+       requestAnimationFrame(process)
      }
 
      document.addEventListener("DOMContentLoaded", init)
