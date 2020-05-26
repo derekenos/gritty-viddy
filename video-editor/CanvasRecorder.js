@@ -1,6 +1,9 @@
 
 export default class CanvasRecorder extends MediaRecorder {
   constructor (canvas, audioTrack = null, frameRate = 30, mimeType = "video/webm") {
+    // Firefox will throw an error if the context isn't initialized before
+    // calling captureStream(), so let's do that.
+    canvas.getContext("2d")
     const stream = canvas.captureStream(frameRate)
 
     if (audioTrack) {
