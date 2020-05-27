@@ -138,6 +138,33 @@ function captureVideoFrame (video, canvas) {
 }
 
 
+const PRESET_FILTERS = {
+  NONE: params => [
+    //[ FILTERS.thresholdFilter, [ 255 - normalizedLoudness * 2 * 255 ] ],
+    //[ FILTERS.brightnessFilter, [ 0 + normalizedLoudness * 3] ],
+    //[ FILTERS.channelFilter, [ 1, 1, 1 ] ],
+    //[ FILTERS.colorReducerFilter, [ 0x80 ] ],
+    //[ FILTERS.rowBlankerFilter, [ 2 ] ],
+    //[ FILTERS.colBlankerFilter, [ 8 ] ],
+    //[ FILTERS.colorGainFilter, [ 0, 0, normalizedLoudness * 10 ] ],
+    //[ FILTERS.invertFilter, [ ] ],
+    //[ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
+    //[ FILTERS.flipHorizontalFilter, [ ] ],
+    //[ FILTERS.verticalMirrorFilter, [ ] ],
+    //[ FILTERS.horizontalMirrorFilter, [ ] ],
+  ],
+
+  TRIPPY_MIRROR: params => [
+    [ FILTERS.thresholdFilter, [ 255 - params.normalizedLoudness * 2 * 255 ] ],
+    [ FILTERS.brightnessFilter, [ 0 + params.normalizedLoudness * 3] ],
+    [ FILTERS.invertFilter, [ ] ],
+    [ FILTERS.audioPlotFilter, params.scaledNormalizedSamples ],
+    [ FILTERS.verticalMirrorFilter, [ ] ],
+    [ FILTERS.horizontalMirrorFilter, [ ] ],
+  ]
+}
+
+
 function getFilters (audioAnalyser, audioBuffer) {
   // Get audio data that we can use to modify the filter parameters.
   const {
@@ -145,22 +172,9 @@ function getFilters (audioAnalyser, audioBuffer) {
     scaledNormalizedSamples
   } = getAudioParams(audioAnalyser, audioBuffer)
 
-  // Define the filter chain.
-  const filters = [
-    //[ FILTERS.thresholdFilter, [ 255 - normalizedLoudness * 4 * 255 ] ],
-    //[ FILTERS.brightnessFilter, [ 0 + normalizedLoudness * 10] ],
-    //[ FILTERS.channelFilter, [ 1, 1, 1 ] ],
-    //[ FILTERS.colorReducerFilter, [ 0x80 ] ],
-    //[ FILTERS.rowBlankerFilter, [ 2 ] ],
-    //[ FILTERS.colBlankerFilter, [ 8 ] ],
-    //[ FILTERS.colorGainFilter, [ 0, 0, normalizedLoudness * 10 ] ],
-    //[ FILTERS.invertFilter, [] ]
-    //[ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
-    //[ FILTERS.flipHorizontalFilter, [ ] ],
-    //[ FILTERS.verticalMirrorFilter, [ 0.5 ] ],
-  ]
+  const params = { normalizedLoudness, scaledNormalizedSamples }
 
-  return filters
+  return PRESET_FILTERS.TRIPPY_MIRROR(params)
 }
 
 

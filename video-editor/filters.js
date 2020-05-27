@@ -30,19 +30,25 @@ function* pixelIterator (imageData) {
   }
 }
 
-
 export function applyFilters (filters, imageData) {
-  const finalImageData = new ImageData(imageData.width, imageData.height)
-  for (let [ i, col, row, pixel] of pixelIterator(imageData)) {
-    for (let [ filter, params ] of filters) {
+  const FRAME_BUFFER_FILTERS = [
+    flipHorizontalFilter,
+    verticalMirrorFilter,
+    horizontalMirrorFilter,
+  ]
+  for (let [ filter, params ] of filters) {
+    const useFrameBuffer = FRAME_BUFFER_FILTERS.includes(filter)
+    const workingImageData = useFrameBuffer ? new ImageData(imageData.width, imageData.height) : imageData
+    for (let [ i, col, row, pixel] of pixelIterator(imageData)) {
       pixel = filter(pixel, params, i, col, row, imageData.data, imageData.width, imageData.height)
+      workingImageData.data[i] = pixel[0]
+      workingImageData.data[i + 1] = pixel[1]
+      workingImageData.data[i + 2] = pixel[2]
+      workingImageData.data[i + 3] = pixel[3]
     }
-    finalImageData.data[i] = pixel[0]
-    finalImageData.data[i + 1] = pixel[1]
-    finalImageData.data[i + 2] = pixel[2]
-    finalImageData.data[i + 3] = pixel[3]
+    imageData = workingImageData
   }
-  return finalImageData
+  return imageData
 }
 
 
@@ -157,8 +163,22 @@ export function flipHorizontalFilter (pixel, params, i, col, row, data, width, h
 // Vertical Mirror Filter
 
 export function verticalMirrorFilter (pixel, params, i, col, row, data, width, height) {
-  const [ factor ] = params
-  i = 4 * (col + width * Math.abs(height - 1 - row * factor))
+  const middleRow = Math.floor(height / 2)
+  if (row >= middleRow) {
+    i = 4 * (col + width * row)
+  }
+  pixel = [ data[i], data[i + 1], data[i + 2], data[i + 3] ]
+  return pixel
+}
+
+
+// Horizontal Mirror Filter
+
+export function horizontalMirrorFilter (pixel, params, i, col, row, data, width, height) {
+  const middleCol = Math.floor(width / 2)
+  if (col >= middleCol) {
+    i = 4 * (middleCol - col - middleCol + width * (height - 1 - row))
+  }
   pixel = [ data[i], data[i + 1], data[i + 2], data[i + 3] ]
   return pixel
 }
