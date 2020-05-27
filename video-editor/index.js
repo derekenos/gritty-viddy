@@ -8,7 +8,7 @@ import * as GPU_FILTERS from "./gpuFilters.js"
 // Constants
 ///////////////////////////////////////////////////////////////////////////////
 
-const USE_GPU = true
+const USE_GPU = false
 const FILTERS = USE_GPU ? GPU_FILTERS : CPU_FILTERS
 
 const SOURCE_WIDTH = 1280
@@ -138,6 +138,29 @@ function captureVideoFrame (video, canvas) {
 }
 
 
+let lastValidCustomFn
+
+function makeCustomFn (innerBody) {
+  const f = x => new Function(
+    "pixel", "params", "i", "col", "row", "width", "height",
+    `let [ r, g, b, a ] = pixel
+     ${x}
+     return [ r, g, b, a ];
+    `
+  )
+  let customFn
+  try {
+    customFn = f(innerBody)
+    customFn([ 0, 0, 0, 0 ], [], 0, 0, 0, 0, 0)
+  } catch (e) {
+    return lastValidCustomFn
+  }
+  lastValidCustomFn = customFn
+  return lastValidCustomFn
+}
+
+lastValidCustomFn = makeCustomFn("")
+
 function getFilters (audioAnalyser, audioBuffer) {
   // Get audio data that we can use to modify the filter parameters.
   const {
@@ -155,7 +178,8 @@ function getFilters (audioAnalyser, audioBuffer) {
     //[ FILTERS.colBlankerFilter, [ 8 ] ],
     //[ FILTERS.colorGainFilter, [ 0, 0, normalizedLoudness * 10 ] ],
     //[ FILTERS.invertFilter, [] ]
-    [ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
+    //[ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
+    [ makeCustomFn(document.querySelector("textarea").value), [ ] ],
   ]
 
   return filters
