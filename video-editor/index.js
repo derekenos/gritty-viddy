@@ -155,7 +155,9 @@ function getFilters (audioAnalyser, audioBuffer) {
     //[ FILTERS.colBlankerFilter, [ 8 ] ],
     //[ FILTERS.colorGainFilter, [ 0, 0, normalizedLoudness * 10 ] ],
     //[ FILTERS.invertFilter, [] ]
-    [ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
+    //[ FILTERS.audioPlotFilter, scaledNormalizedSamples ],
+    //[ FILTERS.flipHorizontalFilter, [ ] ],
+    //[ FILTERS.verticalMirrorFilter, [ 0.5 ] ],
   ]
 
   return filters
