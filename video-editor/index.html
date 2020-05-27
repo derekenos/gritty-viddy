@@ -6,9 +6,13 @@
     <style>
      video,
      canvas {
-       width: 1280px;
-       height: 720px;
+       width: 1280;
+       height: 720;
        border: solid #000 1px;
+       /* TODO - position absolutely to make the video element on-screen
+          but hidden by the final canvas so that Chrome will actually
+          play the video.
+        */
        display: none;
      }
 
@@ -32,123 +36,25 @@
      }
     </style>
 
+    <!-- Include gpu.js -->
+    <script src="ext/gpu-browser.min.js"></script>
+
     <script type="module">
-     import Animator from "./animator.js"
-     import { applyPixelFilters } from "./filters.js"
-     import CanvasRecorder from "./CanvasRecorder.js"
-     import {
-       brightnessFilter,
-       channelFilter,
-       colBlankerFilter,
-       colorBalanceFilter,
-       colorReducerFilter,
-       invertFilter,
-       rowBlankerFilter,
-       thresholdFilter,
-     } from "./pixelFilters.js"
-
-     const dumpFrameToCanvas = (video, canvas) =>
-       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height)
-
-     function initRecordControls (button, canvas) {
-       button.textContent = "Start Recording"
-       const recorder = new CanvasRecorder(canvas)
-       button.addEventListener("click", e => {
-         switch (recorder.state) {
-           case "inactive":
-             recorder.start()
-             e.target.textContent = "Stop Recording"
-             break
-           case "recording":
-             recorder.stop()
-             e.target.textContent = "Start Recording"
-             break
-           default:
-             throw new Error(`Unhandled recorder state: ${recorder.state}`)
-             break
-         }
-       })
-     }
-
-     function init () {
-       // Start video stream.
-       const video = document.querySelector("video")
-       const width = 1280
-       const height = 720
-       navigator.mediaDevices
-         .getUserMedia({ video: { width, height } })
-         .then(stream => {
-           video.srcObject = stream
-         })
-
-       const canvasScale = 1 / 2
-       const workCanvas = document.querySelector("canvas#work")
-       workCanvas.width = width * canvasScale
-       workCanvas.height = height * canvasScale
-       const workCanvasCtx = workCanvas.getContext("2d")
-       const finalCanvas = document.querySelector("canvas#final")
-       finalCanvas.width = width * canvasScale
-       finalCanvas.height = height * canvasScale
-       const finalCanvasCtx = finalCanvas.getContext("2d")
-
-       // Add fullscreen button handler.
-       document.getElementById("final-fullscreen")
-         .addEventListener("click", () => {
-           finalCanvas.requestFullscreen()
-         })
-
-       function getProcessedImageData (filters = []) {
-         dumpFrameToCanvas(video, workCanvas)
-         const ctx = workCanvas.getContext("2d")
-         let imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height)
-         imageData = applyPixelFilters(filters, imageData)
-         return imageData
-       }
-
-       const anim = Animator({ stepsPerCycle: 32 })
-       function process () {
-         finalCanvasCtx.putImageData(
-           getProcessedImageData(
-             [
-               //thresholdFilter(100),
-               //channelFilter([ "r", "g" ]),
-               //colorBalanceFilter(anim.linearInterpolate(0, 255), 0, 0),
-               colorReducerFilter(0b00111111),
-               //rowBlankerFilter(row => row % anim.linearInterpolate(2, 64) === 0, [ 255, 255, 255, 255 ]),
-               //rowBlankerFilter(row => row % 2 === 0, [ 255, 255, 255, 255 ]),
-               //colBlankerFilter(row => row % anim.linearInterpolate(2, 16) === 3, [ 0, 0, 0, 255 ]),
-               //invertFilter,
-               brightnessFilter(0),
-             ]
-           ),
-           0,
-           0
-         )
-         anim.step()
-       }
-
-       setInterval(process, 33)
-
-       initRecordControls(
-         document.getElementById("final-record"),
-         document.querySelector("canvas#final")
-       )
-     }
-
+     import { init } from "./index.js"
      document.addEventListener("DOMContentLoaded", init)
     </script>
 
   </head>
 
   <body>
-    <video autoplay="true"></video>
+    <video autoplay="true" muted></video>
     <canvas id="work"></canvas>
     <div id="final-wrapper">
-      <div id="final-controls">
-        <button id="final-record"></button>
-        <button id="final-fullscreen">&#8644;</button>
-      </div>
       <canvas id="final"></canvas>
+      <div id="final-controls">
+        <button id="record">Start Recording</button>
+        <button id="fullscreen">&#8644;</button>
+      </div>
     </div>
   </body>
 
