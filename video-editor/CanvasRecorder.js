@@ -15,14 +15,25 @@ export default class CanvasRecorder extends MediaRecorder {
 
     this.addEventListener("dataavailable", e => this.chunks.push(e.data))
     this.addEventListener("stop", e => {
-      // Get the data blob, clear the chunks, and create/click-on an anchor
-      // element to download the blob.
-      const blob = new Blob(this.chunks, { type: this.mimeType })
-      this.chunks = []
-      const a = document.createElement("a")
-      a.href = URL.createObjectURL(blob)
-      a.download = `recording_${ Date.now() }`
-      a.click()
+      // Delay for a short time to allow the remaining video segment chunks
+      // to stream in.
+      window.setTimeout(
+        () => {
+          // Get the data blob, clear the chunks, and create/click-on an anchor
+          // element to download the blob.
+          const blob = new Blob(this.chunks, { type: this.mimeType })
+          this.chunks = []
+          const a = document.createElement("a")
+          a.href = URL.createObjectURL(blob)
+          a.download = `recording_${ Date.now() }`
+          a.click()
+        }, this.timeslice
+      )
     })
+  }
+
+  start (timeslice = 1000) {
+    this.timeslice = timeslice
+    super.start(timeslice)
   }
 }
