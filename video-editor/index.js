@@ -60,11 +60,13 @@ function initRecordButtonClickHandler (button, recorder) {
     switch (recorder.state) {
       case "inactive":
         recorder.start()
-        e.target.textContent = "Stop Recording"
+        e.target.classList.add("recording")
+        e.target.textContent = "Stop"
         break
       case "recording":
         recorder.stop()
-        e.target.textContent = "Start Recording"
+        e.target.classList.remove("recording")
+        e.target.textContent = "Record"
         break
       default:
         throw new Error(`Unhandled recorder state: ${recorder.state}`)
@@ -214,8 +216,16 @@ export async function init () {
   finalCanvas.height = workCanvas.height = FINAL_HEIGHT
 
   // Add final canvas fullscreen button handler.
-  document.querySelector("button#fullscreen")
-    .addEventListener("click", () => finalCanvas.requestFullscreen())
+  document.querySelector("button#fullscreen").addEventListener(
+    "click", e => {
+      if (document.fullscreenElement !== null) {
+        document.exitFullscreen()
+      } else {
+        const finalWrapper = document.getElementById("final-wrapper")
+        finalWrapper.requestFullscreen()
+      }
+    }
+  )
 
   // Init the canvas recorder and record button click handler.
   const recorder = new CanvasRecorder(finalCanvas, audioTrack)
