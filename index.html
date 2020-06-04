@@ -105,26 +105,29 @@
     <script src="ext/gpu-browser.min.js"></script>
 
     <script type="module">
-     import { init } from "./index.js"
-     document.addEventListener("DOMContentLoaded", init)
+     import GrittyViddy from "./App.js"
+
+     /* import { init } from "./index.js"
+      * document.addEventListener("DOMContentLoaded", init) */
     </script>
 
   </head>
 
   <body>
-    <video autoplay="true" muted></video>
-    <canvas id="work"></canvas>
-    <div id="final-wrapper">
-      <div id="filters-wrapper">
-        <button id="filters-toggle">Filters</button>
-        <ol id="filters"></ol>
-      </div>
-      <canvas id="final"></canvas>
-      <div id="final-controls">
-        <button id="record">Record</button>
-        <button id="fullscreen">&#8644;</button>
-      </div>
-    </div>
+    <gritty-viddy width="1280" height="720"></gritty-viddy>
+    <!-- <video autoplay="true" muted></video>
+         <canvas id="work"></canvas>
+         <div id="final-wrapper">
+         <div id="filters-wrapper">
+         <button id="filters-toggle">Filters</button>
+         <ol id="filters"></ol>
+         </div>
+         <canvas id="final"></canvas>
+         <div id="final-controls">
+         <button id="record">Record</button>
+         <button id="fullscreen">&#8644;</button>
+         </div>
+         </div> -->
   </body>
 
 </html>

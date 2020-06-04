@@ -5,6 +5,66 @@ import * as CPU_FILTERS from "./filters.js"
 import * as GPU_FILTERS from "./gpuFilters.js"
 
 
+const STYLE = `
+  canvas {
+    width: 100%;
+  }
+
+  button,
+  input,
+  select {
+    background-color: rgba(64, 64, 64, .8);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  /* Remove the <select> button.
+     https://stackoverflow.com/a/20464860/2327940
+   */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+  }
+
+  button:hover {
+    background-color: rgba(100, 100, 100, .8);
+    color: #fff;
+  }
+
+  .controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+  }
+
+  .controls > * {
+    margin: 0 4px;
+  }
+
+  .controls > span:first-child {
+    flex-grow: 1;
+    margin-left: 0;
+  }
+
+  .controls > span:last-child {
+    margin-right: 0;
+  }
+
+  .record.recording,
+  .record.recording:hover {
+    background-color: rgba(255, 0, 0, 1);
+    color: #fff;
+  }
+`
+
+
 // The filter functions need params to be a positionally-mapped array of
 // scalars because that's what gpu.js can deal with, but UI-wise, it's better
 // for us to deal in named parameters, so this maps the param names to their
@@ -55,8 +115,13 @@ export default class ImageProcessor extends Base {
   }
 
   connectedCallback () {
+    super.connectedCallback(STYLE)
+
     this.width = parseInt(this.getAttribute("width") || "1280")
     this.height = parseInt(this.getAttribute("height") || "720")
+
+    this.wrapper = Element(`<div></div>`)
+    this.shadowRoot.appendChild(this.wrapper)
 
     this.canvas = Element(
       `<canvas width="${this.width}" height="${this.height}">
@@ -64,8 +129,30 @@ export default class ImageProcessor extends Base {
       `
     )
     this.canvasCtx = this.canvas.getContext("2d")
-    this.shadowRoot.appendChild(this.canvas)
+    this.wrapper.appendChild(this.canvas)
+
+    this.controls = Element(
+      `<div class="controls">
+         <span><button class="filters">Filters</button></span>
+         <span><button class="record">Record</button></span>
+         <span><button class="fullscreen">&#8644;</button></span>
+       </div>
+      `
+    )
+    // Register the button click handlers.
+    this.controls.querySelector(".fullscreen")
+      .addEventListener("click", this.fullscreenButtonClickHandler.bind(this))
+    this.wrapper.appendChild(this.controls)
+
     this.ready = true
+  }
+
+  fullscreenButtonClickHandler () {
+    if (document.fullscreenElement !== null) {
+      document.exitFullscreen()
+    } else {
+      this.wrapper.requestFullscreen()
+    }
   }
 
   getFilterByName (name) {
