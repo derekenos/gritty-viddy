@@ -9,59 +9,6 @@ const STYLE = `
   canvas {
     width: 100%;
   }
-
-  button,
-  input,
-  select {
-    background-color: rgba(64, 64, 64, .8);
-    color: #fff;
-    border: none;
-    padding: 8px 14px;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-
-  /* Remove the <select> button.
-     https://stackoverflow.com/a/20464860/2327940
-   */
-  select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    text-indent: 1px;
-    text-overflow: '';
-  }
-
-  button:hover {
-    background-color: rgba(100, 100, 100, .8);
-    color: #fff;
-  }
-
-  .controls {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-  }
-
-  .controls > * {
-    margin: 0 4px;
-  }
-
-  .controls > span:first-child {
-    flex-grow: 1;
-    margin-left: 0;
-  }
-
-  .controls > span:last-child {
-    margin-right: 0;
-  }
-
-  .record.recording,
-  .record.recording:hover {
-    background-color: rgba(255, 0, 0, 1);
-    color: #fff;
-  }
 `
 
 
@@ -69,7 +16,7 @@ const STYLE = `
 // scalars because that's what gpu.js can deal with, but UI-wise, it's better
 // for us to deal in named parameters, so this maps the param names to their
 // array position so that we can do the translation on filter function call.
-const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
+export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
   [ "threshold", [ "threshold" ] ],
   [ "brightness", [ "factor" ] ],
   [ "channel", [ "keepR", "keepG", "keepB" ] ],
@@ -131,39 +78,21 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
-    this.controls = Element(
-      `<div class="controls">
-         <span><button class="filters">Filters</button></span>
-         <span><button class="record">Record</button></span>
-         <span><button class="fullscreen">&#8644;</button></span>
-       </div>
-      `
-    )
-    // Register the button click handlers.
-    this.controls.querySelector(".fullscreen")
-      .addEventListener("click", this.fullscreenButtonClickHandler.bind(this))
-    this.wrapper.appendChild(this.controls)
 
     this.ready = true
-  }
-
-  fullscreenButtonClickHandler () {
-    if (document.fullscreenElement !== null) {
-      document.exitFullscreen()
-    } else {
-      this.wrapper.requestFullscreen()
-    }
   }
 
   getFilterByName (name) {
     return (this.useGPU ? GPU_FILTERS : CPU_FILTERS)[`${name}Filter`]
   }
 
-  addFilter (filterName, filterParamsObj) {
+  addFilter (filterName, filterParamsObj = {}) {
     // Add a filter to the filter chain.
     const filterFn = this.getFilterByName(filterName)
     // If a params obj wasn't specified, use the defaults.
-    filterParamsObj = filterParamsObj || FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
+    if (Object.keys(filterParamsObj).length === 0) {
+      filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
+    }
     const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
     this.filters.push([ filterFn, filterParamsArr ])
   }

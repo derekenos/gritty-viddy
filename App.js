@@ -2,6 +2,7 @@
 import Base from "./Base.js"
 import VideoCanvas from "./VideoCanvas.js"
 import ImageProcessor from "./ImageProcessor.js"
+import Controls from "./Controls.js"
 import { Element } from "./lib/domHelpers.js"
 
 
@@ -18,11 +19,27 @@ const STYLE = `
   image-processor {
     position: absolute;
     z-index: 1;
+    width: 100%;
+  }
+
+  con-trols {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
   }
 `
 
 
 export default class GrittyViddy extends Base {
+  constructor () {
+    super()
+    this.filters = [
+      [ "brightness", { factor: 1 } ]
+    ]
+  }
+
   connectedCallback () {
     super.connectedCallback(STYLE)
 
@@ -44,7 +61,16 @@ export default class GrittyViddy extends Base {
        </image-processor>
       `
     )
+    // Add the filters to the image processor.
+    this.filters.forEach(([ filterName, filterParams ]) => {
+      this.imageProcessor.addFilter(filterName, filterParams)
+    })
     wrapper.appendChild(this.imageProcessor)
+
+    this.controls = Element(`<con-trols></con-trols>`)
+    this.controls.setFullscreenElement(wrapper)
+    this.controls.setFilters(this.filters)
+    wrapper.appendChild(this.controls)
 
     // Start processing frames.
     requestAnimationFrame(this.processFrame.bind(this))
