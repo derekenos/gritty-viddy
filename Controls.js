@@ -2,7 +2,11 @@
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
-import { TOPICS, FILTER_PRESETS } from "./lib/constants.js"
+import {
+  TOPICS,
+  FILTER_PRESETS,
+  FILTER_NAME_PARAM_DEFAULT_MAP
+} from "./lib/constants.js"
 import { getFilterById } from "./lib/utils.js"
 import { subscribe, publish } from "./pubSub.js"
 
@@ -120,6 +124,7 @@ export default class Controls extends Base {
     this.wrapper.querySelector(".add-filter")
       .addEventListener("click", this.addFilter.bind(this))
 
+    subscribe(TOPICS.FILTER_CHANGE, this.filterChangeHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
@@ -152,13 +157,22 @@ export default class Controls extends Base {
     })
   }
 
+  filterChangeHandler ([ filterId, newFilterName ]) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    const [ ,, params ] = this.filters[i]
+    this.filters[i][1] = newFilterName
+    // Set the default params.
+    this.filters[i][2] = FILTER_NAME_PARAM_DEFAULT_MAP.get(newFilterName)
+    this.renderFilters()
+  }
+
   paramValueUpdateHandler ([ filterId, name, value ]) {
     // Update the local filter param and publish the new filters.
     const [ filter ] = getFilterById(this.filters, filterId)
     if (!filter) {
       return
     }
-    const [,, params ] = filter
+    const [ ,, params ] = filter
     params[name] = value
   }
 

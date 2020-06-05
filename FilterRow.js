@@ -133,7 +133,7 @@ export default class FilterRow extends Base {
     // Select the option that matches the name property.
     el.querySelector(`option[value="${name}"]`).selected = true
 
-    // Read the params from dataset.
+    // Read the params from dataset and add the filter-param elements.
     const filterParams = el.querySelector(".filter-params")
     for (let paramName of FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(name)) {
       filterParams.appendChild(Element(
@@ -146,7 +146,14 @@ export default class FilterRow extends Base {
     this.shadow.appendChild(el)
 
     // Register the click handler.
-    this.shadow.addEventListener("click", this.buttonHandler.bind(this))
+    this.shadow.addEventListener("click", this.buttonHandler)
+
+    // Publish filter select element changes.
+    el.querySelector("select.filter").addEventListener("change", e => {
+      const target = e.target
+      const filterId = parseInt(target.parentElement.getAttribute("filterId"))
+      publish(TOPICS.FILTER_CHANGE, [ filterId, target.value ])
+    })
   }
 
   buttonHandler (e) {

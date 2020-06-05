@@ -2,6 +2,7 @@
 import Base from "./Base.js"
 import { TOPICS, FILTER_PRESETS } from "./lib/constants.js"
 import { subscribe } from "./pubSub.js"
+import { FILTER_NAME_PARAM_DEFAULT_MAP } from "./lib/constants.js"
 import { Element } from "./lib/domHelpers.js"
 import { getFilterById } from "./lib/utils.js"
 import * as CPU_FILTERS from "./filters.js"
@@ -22,8 +23,8 @@ const STYLE = `
 export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
   [ "threshold", [ "threshold" ] ],
   [ "brightness", [ "factor" ] ],
-  [ "channel", [ "keepR", "keepG", "keepB" ] ],
-  [ "colorGain", [ "rGain", "gGain", "bGain" ] ],
+  [ "channel", [ "r", "g", "b" ] ],
+  [ "colorGain", [ "r", "g", "b" ] ],
   [ "colorReducer", [ "mask" ] ],
   [ "rowBlanker", [ "nth" ] ],
   [ "colBlanker", [ "nth" ] ],
@@ -32,22 +33,6 @@ export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
   [ "flipHorizontal", [ ] ],
   [ "verticalMirror", [ ] ],
   [ "horizontalMirror", [ ] ],
-])
-
-// Define default param values to use when adding a new filter to the chain.
-const FILTER_NAME_PARAM_DEFAULT_MAP = new Map([
-  [ "threshold", { threshold: 100 } ],
-  [ "brightness", { factor: 1 } ],
-  [ "channel", { keepR: true, keepG: true, keepB: true } ],
-  [ "colorGain", { rGain: 0, gGain: 0, bGain: 0 } ],
-  [ "colorReducer", { mask: 0x88 } ],
-  [ "rowBlanker", { nth: 2 } ],
-  [ "colBlanker", { nth: 2 } ],
-  [ "invert", {} ],
-  [ "audioPlot", {} ],
-  [ "flipHorizontal", {} ],
-  [ "verticalMirror", {} ],
-  [ "horizontalMirror", {} ],
 ])
 
 
@@ -99,6 +84,7 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
+    subscribe(TOPICS.FILTER_CHANGE, this.filterChangeHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
@@ -122,6 +108,17 @@ export default class ImageProcessor extends Base {
     }
     const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
     return [ filterId, filterName, filterFn, filterParamsArr ]
+  }
+
+  filterChangeHandler ([ filterId, newFilterName ]) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    const [ ,,, params ] = this.filters[i]
+    const filterFn = this.getFilterByName(newFilterName)
+    const paramsArr = paramsObjectToArray(
+      newFilterName,
+      FILTER_NAME_PARAM_DEFAULT_MAP.get(newFilterName)
+    )
+    this.filters[i] = [ filterId, newFilterName, filterFn, paramsArr ]
   }
 
   presetChangeHandler (presetName) {
