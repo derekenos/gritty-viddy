@@ -55,10 +55,12 @@ export class FilterParam extends Base {
     this.shadow.appendChild(el)
 
     this.shadow.addEventListener("input", this.paramValueChangeHandler)
+    // Stop keypress propagation to prevent trigger shortcuts when
+    // editing text fields.
+    this.shadow.addEventListener("keydown", e => e.stopPropagation())
   }
 
   paramValueChangeHandler (e) {
-    e.stopPropagation()
     const param = e.target
     const filterId = parseInt(param.getAttribute("filterId"))
     const name = param.getAttribute("name")

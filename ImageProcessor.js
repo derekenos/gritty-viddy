@@ -84,6 +84,9 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
+    // Select the Default preset.
+    this.presetChangeHandler("Default")
+
     subscribe(TOPICS.FILTER_CHANGE, this.filterChangeHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))

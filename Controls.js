@@ -90,7 +90,7 @@ export default class Controls extends Base {
              <select class="filter-preset">
                <option value="">Preset: none</option>
                ${ FILTER_PRESET_NAMES.map((k, i) =>
-                    `<option value="${k}">Preset: ${k}</option>`
+                    `<option value="${k}"${i === 0 ? " selected" : ""}>Preset: ${k}</option>`
                   ).join('\n') }
              </select>
              <ol></ol>
@@ -115,7 +115,8 @@ export default class Controls extends Base {
     })
 
     // Define a preset change handler.
-    this.wrapper.querySelector(".filter-preset").addEventListener("change", e => {
+    const filterPreset = this.wrapper.querySelector(".filter-preset")
+    filterPreset.addEventListener("change", e => {
       const presetName = e.target.value
       publish(TOPICS.PRESET_CHANGE, presetName)
       if (presetName) {
@@ -124,8 +125,13 @@ export default class Controls extends Base {
       }
     })
 
+    // Render the default preset.
+    this.filters = FILTER_PRESETS.get(filterPreset.value)
+    this.renderFilters()
+
     this.wrapper.querySelector(".add-filter")
       .addEventListener("click", this.addFilter.bind(this))
+
 
     subscribe(TOPICS.FILTER_CHANGE, this.filterChangeHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
