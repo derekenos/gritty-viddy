@@ -4,6 +4,7 @@ import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
 import {
   TOPICS,
+  FILTER_PRESET_NAMES,
   FILTER_PRESETS,
   FILTER_NAME_PARAM_DEFAULT_MAP
 } from "./lib/constants.js"
@@ -88,7 +89,7 @@ export default class Controls extends Base {
            <div>
              <select class="filter-preset">
                <option value="">Preset: none</option>
-               ${ Object.keys(FILTER_PRESETS).map((k, i) =>
+               ${ FILTER_PRESET_NAMES.map((k, i) =>
                     `<option value="${k}">Preset: ${k}</option>`
                   ).join('\n') }
              </select>
@@ -118,7 +119,7 @@ export default class Controls extends Base {
       const presetName = e.target.value
       publish(TOPICS.PRESET_CHANGE, presetName)
       if (presetName) {
-        this.filters = FILTER_PRESETS[presetName]
+        this.filters = FILTER_PRESETS.get(presetName)
         this.renderFilters()
       }
     })
@@ -165,6 +166,8 @@ export default class Controls extends Base {
     this.filters[i][1] = newFilterName
     // Set the default params.
     this.filters[i][2] = FILTER_NAME_PARAM_DEFAULT_MAP.get(newFilterName)
+    // Clear preset selection.
+    this.shadow.querySelector("select.filter-preset").value = ""
     this.renderFilters()
   }
 
@@ -176,6 +179,8 @@ export default class Controls extends Base {
     }
     const [ ,, params ] = filter
     params[name] = value
+    // Clear preset selection.
+    this.shadow.querySelector("select.filter-preset").value = ""
   }
 
   removeFilterHandler (filterId) {
@@ -184,6 +189,8 @@ export default class Controls extends Base {
       this.filters.splice(i, 1)
       this.renderFilters()
     }
+    // Clear preset selection.
+    this.shadow.querySelector("select.filter-preset").value = ""
   }
 
   moveFilterUpHandler (filterId) {
@@ -193,6 +200,8 @@ export default class Controls extends Base {
       this.filters.splice(i - 1, 0, filter)
       this.renderFilters()
     }
+    // Clear preset selection.
+    this.shadow.querySelector("select.filter-preset").value = ""
   }
 
   moveFilterDownHandler (filterId) {
@@ -202,6 +211,8 @@ export default class Controls extends Base {
       this.filters.splice(i + 1, 0, filter)
       this.renderFilters()
     }
+    // Clear preset selection.
+    this.shadow.querySelector("select.filter-preset").value = ""
   }
 }
 

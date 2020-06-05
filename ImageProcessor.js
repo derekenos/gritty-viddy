@@ -119,7 +119,7 @@ export default class ImageProcessor extends Base {
 
   presetChangeHandler (presetName) {
     if (presetName) {
-      this.filters = FILTER_PRESETS[presetName].map(
+      this.filters = FILTER_PRESETS.get(presetName).map(
         this.convertIncomingFilter.bind(this)
       )
     }
