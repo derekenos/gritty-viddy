@@ -2,7 +2,7 @@
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
-import { TOPICS, publish } from "./pubSub.js"
+import { TOPICS, subscribe, publish } from "./pubSub.js"
 
 
 const STYLE = `
@@ -54,7 +54,7 @@ const STYLE = `
 export default class Controls extends Base {
   constructor () {
     super()
-    this.ready = false
+    this.filters = []
   }
 
   connectedCallback () {
@@ -86,7 +86,9 @@ export default class Controls extends Base {
     // Render the filters list.
     this.renderFilters()
 
-    this.ready = true
+    subscribe(TOPICS.REMOVE_FILTER, this.removeFilter.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUp.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDown.bind(this))
   }
 
   setFilters (filters) {
@@ -102,9 +104,9 @@ export default class Controls extends Base {
     // Remove all existing filter rows.
     Array.from(filtersEl.children).forEach(x => x.remove())
     // Add all the current rows.
-    this.filters.forEach(([ filterName, filterParams ], idx) => {
+    this.filters.forEach(([ filterId, filterName, filterParams ]) => {
       const filterRow = Element(
-        `<filter-row name="${filterName}" idx="${idx}"></filter-row>`
+        `<filter-row name="${filterName}" filterId="${filterId}"></filter-row>`
       )
       for (let [k, v] of Object.entries(filterParams)) {
         filterRow.dataset[k] = v
@@ -112,6 +114,20 @@ export default class Controls extends Base {
       filtersEl.appendChild(filterRow)
     })
   }
+
+  removeFilter (idx) {
+    this.filters.splice(parseInt(idx), 1)
+    this.renderFilters()
+  }
+
+  moveFilterUp (idx) {
+    console.log(`move ${idx} up`)
+  }
+
+  moveFilterDown (idx) {
+    console.log(`move ${idx} down`)
+  }
+
 }
 
 

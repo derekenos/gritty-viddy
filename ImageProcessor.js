@@ -54,10 +54,28 @@ const paramsObjectToArray = (filterName, paramsObj) =>
   FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(filterName).map(k => paramsObj[k])
 
 
+function evalParamsArr (paramsArr, { loudness, samples }) {
+  // Attempt to eval the parameter array strings to interpolate loudness/samples
+  // and convert to a float.
+  const finalArr = []
+  paramsArr.forEach(s => {
+    let evalResult
+    try {
+      evalResult = parseFloat(eval(s))
+    } catch (e) {
+    }
+    if (!(typeof evalResult === "number") || Number.isNaN(evalResult)) {
+      throw new Error(`eval did not yield number on: ${s}`)
+    }
+    finalArr.push(evalResult)
+  })
+  return finalArr
+}
+
+
 export default class ImageProcessor extends Base {
   constructor () {
     super()
-    this.ready = false
     this.useGPU = true
     this.filters = []
   }
@@ -79,47 +97,47 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
-    subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
-
-    this.ready = true
+    subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
   }
 
   getFilterByName (name) {
     return (this.useGPU ? GPU_FILTERS : CPU_FILTERS)[`${name}Filter`]
   }
 
-  addFilter (filterName, filterParamsObj = {}) {
-    // Add a filter to the filter chain.
-    const filterFn = this.getFilterByName(filterName)
-    // If a params obj wasn't specified, use the defaults.
-    if (Object.keys(filterParamsObj).length === 0) {
-      filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
-    }
-    this.filters.push([ filterName, filterFn, filterParamsObj ])
+  filtersUpdatedHandler (filters) {
+    this.filters = []
+    filters.forEach(([ filterId, filterName, filterParamsObj ]) => {
+      const filterFn = this.getFilterByName(filterName)
+      // If a params obj wasn't specified, use the defaults.
+      if (Object.keys(filterParamsObj).length === 0) {
+        filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
+      }
+      const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
+      this.filters.push([ filterId, filterName, filterFn, filterParamsArr ])
+    })
   }
 
-  process (imageData) {
-    // Convert this.filters to the [ [ <filterFn>, <paramsArr> ], ... ]
-    // that applyFilters() expects.
-    const filters = this.filters.map(([ filterName, filterFn, filterParamsObj ]) => [
-      filterFn, paramsObjectToArray(filterName, filterParamsObj)
-    ])
+  process (imageData, { loudness, samples }) {
+    let filters
+    try {
+      // Strip the leading filterId element from this.filters and eval the
+      // params strings.
+      filters = this.filters.map(([, name, fn, paramsArr]) => {
+        // Special case audioPlot that needs samples array as its sole argument.
+        if (name === "audioPlot") {
+          paramsArr = samples
+        } else {
+          paramsArr = evalParamsArr(paramsArr, { loudness, samples })
+        }
+        return [ fn, paramsArr ]
+      })
+    }
+    catch (e) {
+      return
+    }
     imageData = (this.useGPU ? GPU_FILTERS : CPU_FILTERS)
       .applyFilters(filters, imageData)
     this.canvasCtx.putImageData(imageData, 0, 0)
-  }
-
-  paramValueUpdateHandler ([ filterIdx, name, value ]) {
-    let evalResult
-    try {
-      evalResult = parseInt(eval(value))
-    } catch (e) {
-    }
-    if (!(typeof evalResult === "number") || Number.isNaN(evalResult)) {
-      console.warn(`eval did not yield number on: ${value}`)
-      return
-    }
-    this.filters[filterIdx][2][name] = evalResult
   }
 }
 

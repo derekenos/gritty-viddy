@@ -11,12 +11,7 @@ const STYLE = `
 
 
 export default class VideoCanvas extends Base {
-  constructor () {
-    super()
-    this.ready = false
-  }
-
-  async connectedCallback () {
+  connectedCallback () {
     super.connectedCallback(STYLE)
 
     this.width = parseInt(this.getAttribute("width") || "1280")
@@ -38,14 +33,13 @@ export default class VideoCanvas extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
 
     // Start the audio/video input stream.
-    this.shadow.querySelector("video").srcObject =
-      await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: {
-          width: this.width,
-          height: this.height,
-        }
-      })
+    navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: {
+        width: this.width,
+        height: this.height,
+      }
+    }).then(stream => this.shadow.querySelector("video").srcObject = stream)
 
     // Get the audio stream.
     // from: https://stackoverflow.com/a/52400024/2327940
@@ -61,9 +55,6 @@ export default class VideoCanvas extends Base {
     // Uncomment to hear the audio in realtime.
     //sourceNode.connect(audioCtx.destination);
     this.audioTrack = dest.stream.getAudioTracks()[0]
-
-    // Indicate to captureFrame() that everything's all set.
-    this.ready = true
   }
 
   captureFrame () {

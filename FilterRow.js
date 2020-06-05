@@ -36,7 +36,7 @@ const FILTER_PARAM_STYLE = maxContentRems => `
 
 export class FilterParam extends Base {
   connectedCallback () {
-    const filterIdx = this.getAttribute("filterIdx")
+    const filterId = this.getAttribute("filterId")
     const name = this.getAttribute("name")
     const value = this.getAttribute("value")
     const maxContentRems = Math.floor(Math.max(name.length * .8, value.length * 1.2))
@@ -46,7 +46,7 @@ export class FilterParam extends Base {
     const el = Element(
       `<span class="wrapper">
          <label>${name}</label>
-         <input type="text" value="${value}" name="${name}" filterIdx="${filterIdx}">
+         <input type="text" value="${value}" name="${name}" filterId="${filterId}">
        </span>
       `
     )
@@ -56,11 +56,12 @@ export class FilterParam extends Base {
   }
 
   paramValueChangeHandler (e) {
+    e.stopPropagation()
     const param = e.target
-    const filterIdx = param.getAttribute("filterIdx")
+    const filterId = param.getAttribute("filterId")
     const name = param.getAttribute("name")
     const value = param.value
-    publish(TOPICS.PARAMS_UPDATE, [ filterIdx, name, value ])
+    publish(TOPICS.PARAMS_UPDATE, [ filterId, name, value ])
   }
 
 }
@@ -103,10 +104,10 @@ export default class FilterRow extends Base {
     super.connectedCallback(FILTER_ROW_STYLE)
 
     const name = this.getAttribute("name")
-    const idx = this.getAttribute("idx")
+    const filterId = this.getAttribute("filterId")
 
     const el = Element(
-      `<li>
+      `<li filterId="${filterId}">
          <button class="remove">x</button>
          <button class="move-up">&uarr;</button>
          <button class="move-down">&darr;</button>
@@ -135,13 +136,33 @@ export default class FilterRow extends Base {
     const filterParams = el.querySelector(".filter-params")
     for (let paramName of FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(name)) {
       filterParams.appendChild(Element(
-        `<filter-param filterIdx="${idx}" name="${paramName}"
+        `<filter-param filterId="${filterId}" name="${paramName}"
                        value="${this.dataset[paramName]}">
          </filter-param>
         `
       ))
     }
     this.shadow.appendChild(el)
+
+    // Register the click handler.
+    this.shadow.addEventListener("click", this.buttonHandler.bind(this))
+  }
+
+  buttonHandler (e) {
+    const target = e.target
+    if (target.tagName !== "BUTTON") {
+      return
+    }
+    const filterId = target.parentElement.getAttribute("filterId")
+    let topic
+    if (target.classList.contains("remove")) {
+      topic = TOPICS.REMOVE_FILTER
+    } else if (target.classList.contains("move-up")) {
+      topic = TOPICS.MOVE_FILTER_UP
+    } else if (target.classList.contains("move-down")) {
+      topic = TOPICS.MOVE_FILTER_DOWN
+    }
+    publish(topic, filterId)
   }
 }
 

@@ -4,6 +4,10 @@ export const TOPICS = Object.freeze(
     [
       "FULLSCREEN_TOGGLE",
       "PARAMS_UPDATE",
+      "REMOVE_FILTER",
+      "MOVE_FILTER_UP",
+      "MOVE_FILTER_DOWN",
+      "FILTERS_UPDATED",
     ].map(x => [ x, x ])
   )
 )
