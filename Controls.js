@@ -120,6 +120,7 @@ export default class Controls extends Base {
     this.wrapper.querySelector(".add-filter")
       .addEventListener("click", this.addFilter.bind(this))
 
+    subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
@@ -149,6 +150,16 @@ export default class Controls extends Base {
       }
       filtersEl.appendChild(filterRow)
     })
+  }
+
+  paramValueUpdateHandler ([ filterId, name, value ]) {
+    // Update the local filter param and publish the new filters.
+    const [ filter ] = getFilterById(this.filters, filterId)
+    if (!filter) {
+      return
+    }
+    const [,, params ] = filter
+    params[name] = value
   }
 
   removeFilterHandler (filterId) {
