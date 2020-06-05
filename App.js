@@ -82,8 +82,6 @@ export default class GrittyViddy extends Base {
     this.controls = Element(`<con-trols></con-trols>`)
     this.wrapper.appendChild(this.controls)
 
-    this.controls.setFilters(this.filters)
-
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
 
@@ -142,17 +140,14 @@ export default class GrittyViddy extends Base {
     }
   }
 
-  paramValueUpdateHandler ([ filterIdx, name, value ]) {
-    let evalResult
-    try {
-      evalResult = parseInt(eval(value))
-    } catch (e) {
-    }
-    if (!(typeof evalResult === "number") || Number.isNaN(evalResult)) {
-      console.warn(`eval did not yield number on: ${value}`)
+  paramValueUpdateHandler ([ filterId, name, value ]) {
+    // Update the local filter param and publish the new filters.
+    const filters = this.filters.filter(([ id ]) => id === filterId)
+    if (filters.length === 0) {
+      console.warn(`No matching filter for idx: ${filterIdx}`)
       return
     }
-    this.filters[filterIdx][2][name] = evalResult
+    filters[0][2][name] = value
   }
 
 }

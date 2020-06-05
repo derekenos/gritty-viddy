@@ -83,19 +83,10 @@ export default class Controls extends Base {
       }
     })
 
-    // Render the filters list.
-    this.renderFilters()
-
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilter.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUp.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDown.bind(this))
-  }
-
-  setFilters (filters) {
-    this.filters = filters
-    if (this.ready) {
-      this.renderFilters()
-    }
+    subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
   }
 
   renderFilters () {
@@ -113,6 +104,11 @@ export default class Controls extends Base {
       }
       filtersEl.appendChild(filterRow)
     })
+  }
+
+  filtersUpdatedHandler (filters) {
+    this.filters = filters
+    this.renderFilters()
   }
 
   removeFilter (idx) {

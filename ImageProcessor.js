@@ -98,6 +98,7 @@ export default class ImageProcessor extends Base {
     this.wrapper.appendChild(this.canvas)
 
     subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
+    subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
   }
 
   getFilterByName (name) {
@@ -115,6 +116,19 @@ export default class ImageProcessor extends Base {
       const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
       this.filters.push([ filterId, filterName, filterFn, filterParamsArr ])
     })
+  }
+
+  paramValueUpdateHandler ([ filterId, name, value ]) {
+    // Update the local filter param and publish the new filters.
+    const filters = this.filters.filter(([ id ]) => id === filterId)
+    if (filters.length === 0) {
+      console.warn(`No matching filter for idx: ${filterIdx}`)
+      return
+    }
+    const [, filterName,, paramsArr ] = filters[0]
+    // Find param index.
+    const i = FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(filterName).indexOf(name)
+    paramsArr[i] = value
   }
 
   process (imageData, { loudness, samples }) {

@@ -58,7 +58,7 @@ export class FilterParam extends Base {
   paramValueChangeHandler (e) {
     e.stopPropagation()
     const param = e.target
-    const filterId = param.getAttribute("filterId")
+    const filterId = parseInt(param.getAttribute("filterId"))
     const name = param.getAttribute("name")
     const value = param.value
     publish(TOPICS.PARAMS_UPDATE, [ filterId, name, value ])
