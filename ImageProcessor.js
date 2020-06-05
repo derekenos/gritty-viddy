@@ -104,26 +104,30 @@ export default class ImageProcessor extends Base {
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
     subscribe(TOPICS.PRESET_CHANGE, this.presetChangeHandler.bind(this))
+    subscribe(TOPICS.ADD_FILTER, this.addFilterHandler.bind(this))
   }
 
   getFilterByName (name) {
     return (this.useGPU ? GPU_FILTERS : CPU_FILTERS)[`${name}Filter`]
   }
 
-  presetChangeHandler (presetName) {
-    if (!presetName) {
-      return
+  convertIncomingFilter (filter) {
+    // Convert the incoming filter to an internal array that includes the
+    // function object itself and a params object converted to an array.
+    const [ filterId, filterName, filterParamsObj ] = filter
+    const filterFn = this.getFilterByName(filterName)
+    // If a params obj wasn't specified, use the defaults.
+    if (Object.keys(filterParamsObj).length === 0) {
+      filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
     }
-    this.filters = []
-    FILTER_PRESETS[presetName].forEach(([ filterId, filterName, filterParamsObj ]) => {
-      const filterFn = this.getFilterByName(filterName)
-      // If a params obj wasn't specified, use the defaults.
-      if (Object.keys(filterParamsObj).length === 0) {
-        filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
-      }
-      const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
-      this.filters.push([ filterId, filterName, filterFn, filterParamsArr ])
-    })
+    const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
+    return [ filterId, filterName, filterFn, filterParamsArr ]
+  }
+
+  presetChangeHandler (presetName) {
+    if (presetName) {
+      this.filters = FILTER_PRESETS[presetName].map(this.convertIncomingFilter)
+    }
   }
 
   paramValueUpdateHandler ([ filterId, name, value ]) {
@@ -157,6 +161,10 @@ export default class ImageProcessor extends Base {
       this.filters.splice(i, 1)
       this.filters.splice(i + 1, 0, filter)
     }
+  }
+
+  addFilterHandler (filter) {
+    this.filters.push(this.convertIncomingFilter(filter))
   }
 
   process (imageData, { loudness, samples }) {

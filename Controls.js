@@ -87,6 +87,7 @@ export default class Controls extends Base {
                ${ Object.keys(FILTER_PRESETS).map(k => `<option value="${k}">Preset: ${k}</option>`).join('\n') }
              </select>
              <ol></ol>
+             <button class="add-filter">Add Filter</button>
            </div>
          </div>
          <div><button class="record">Record</button></div>
@@ -116,9 +117,21 @@ export default class Controls extends Base {
       }
     })
 
+    this.wrapper.querySelector(".add-filter")
+      .addEventListener("click", this.addFilter.bind(this))
+
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
+  }
+
+  addFilter () {
+    // Find the current max filterId.
+    const maxId = this.filters.reduce((maxId, [ id ]) => Math.max(maxId, id), -1)
+    const filter = [ maxId + 1, "brightness", { factor: 1 } ]
+    publish(TOPICS.ADD_FILTER, filter)
+    this.filters.push(filter)
+    this.renderFilters()
   }
 
   renderFilters () {
