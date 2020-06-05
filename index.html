@@ -3,163 +3,17 @@
   <head>
     <meta charset="utf-8">
 
-    <style>
-     video,
-     canvas#work,
-     #final-wrapper {
-       width: 1280;
-       height: 720;
-     }
-
-     video {
-       position: absolute;
-     }
-
-     canvas#work {
-       display: none;
-     }
-
-     canvas#final {
-       width: 100%;
-       height: 100%;
-     }
-
-     #final-wrapper {
-       border: solid #000 1px;
-       position: relative;
-     }
-
-     #final-controls {
-       position: absolute;
-       top: 0;
-       right: 0;
-     }
-
-     button,
-     input,
-     select {
-       background-color: rgba(64, 64, 64, .8);
-       color: #fff;
-       border: none;
-       padding: 8px 14px;
-       font-size: 1rem;
-       cursor: pointer;
-     }
-
-     /* Remove the <select> button.
-        https://stackoverflow.com/a/20464860/2327940
-      */
-     select {
-       -webkit-appearance: none;
-       -moz-appearance: none;
-       text-indent: 1px;
-       text-overflow: '';
-     }
-
-     button:hover {
-       background-color: rgba(100, 100, 100, .8);
-       color: #fff;
-     }
-
-     #record.recording,
-     #record.recording:hover {
-       background-color: rgba(255, 0, 0, 1);
-       color: #fff;
-     }
-
-     #filters {
-       list-style: none;
-       padding: 0;
-     }
-
-     #filters-wrapper {
-       position: absolute;
-     }
-
-     .filter-row {
-       font-weight: bold;
-       margin-bottom: 6px;
-     }
-
-     .filter-param {
-       position: relative;
-     }
-
-     .filter-param label {
-       position: absolute;
-       font-size: .8rem;
-       color: #fff;
-       left: .2rem;
-       top: -1.2rem;
-       font-weight: normal;
-     }
-
-     .filter-param input {
-       padding-top: 1.4rem;
-       padding-right: .2rem;
-     }
-
-    </style>
-
     <!-- Include gpu.js -->
     <script src="ext/gpu-browser.min.js"></script>
 
     <script type="module">
      import GrittyViddy from "./App.js"
-
-     /* import { init } from "./index.js"
-      * document.addEventListener("DOMContentLoaded", init) */
     </script>
 
   </head>
 
   <body>
     <gritty-viddy width="1280" height="720"></gritty-viddy>
-    <!-- <video autoplay="true" muted></video>
-         <canvas id="work"></canvas>
-         <div id="final-wrapper">
-         <div id="filters-wrapper">
-         <button id="filters-toggle">Filters</button>
-         <ol id="filters"></ol>
-         </div>
-         <canvas id="final"></canvas>
-         <div id="final-controls">
-         <button id="record">Record</button>
-         <button id="fullscreen">&#8644;</button>
-         </div>
-         </div> -->
   </body>
 
 </html>
-
-
-<template id="filter-param">
-  <span class="filter-param">
-    <label></label>
-    <input type="text" value="" name="" size="">
-  </span>
-</template>
-
-
-<template id="filter-row">
-  <li class="filter-row">
-    <button class="remove">x</button>
-    <button class="move-up">&uarr;</button>
-    <button class="move-down">&darr;</button>
-    <select class="filter">
-      <option value="threshold">Threshold</option>
-      <option value="brightness">Brightness</option>
-      <option value="channel">Channel</option>
-      <option value="colorGain">Color Gain</option>
-      <option value="colorReducer">Color Reducer</option>
-      <option value="rowBlanker">Row Blanker</option>
-      <option value="colBlanker">Column Blanker</option>
-      <option value="invert">Invert</option>
-      <option value="audioPlot">Audio Plot</option>
-      <option value="flipHorizontal">Flip Horizontal</option>
-      <option value="verticalMirror">Vertical Mirror</option>
-      <option value="horizontalMirror">Horizontal Mirror</option>
-    </select>
-    <span class="filter-params"></span>
-  </li>
-</template>
