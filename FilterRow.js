@@ -153,7 +153,7 @@ export default class FilterRow extends Base {
     if (target.tagName !== "BUTTON") {
       return
     }
-    const filterId = target.parentElement.getAttribute("filterId")
+    const filterId = parseInt(target.parentElement.getAttribute("filterId"))
     let topic
     if (target.classList.contains("remove")) {
       topic = TOPICS.REMOVE_FILTER

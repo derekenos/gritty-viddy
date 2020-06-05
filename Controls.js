@@ -3,6 +3,7 @@ import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
 import { TOPICS, subscribe, publish } from "./pubSub.js"
+import { getFilterById } from "./lib/utils.js"
 
 
 const STYLE = `
@@ -83,10 +84,10 @@ export default class Controls extends Base {
       }
     })
 
-    subscribe(TOPICS.REMOVE_FILTER, this.removeFilter.bind(this))
-    subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUp.bind(this))
-    subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDown.bind(this))
     subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
+    subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
   }
 
   renderFilters () {
@@ -111,19 +112,31 @@ export default class Controls extends Base {
     this.renderFilters()
   }
 
-  removeFilter (idx) {
-    this.filters.splice(parseInt(idx), 1)
-    this.renderFilters()
+  removeFilterHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (filter) {
+      this.filters.splice(i, 1)
+      this.renderFilters()
+    }
   }
 
-  moveFilterUp (idx) {
-    console.log(`move ${idx} up`)
+  moveFilterUpHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (i > 0) {
+      this.filters.splice(i, 1)
+      this.filters.splice(i - 1, 0, filter)
+      this.renderFilters()
+    }
   }
 
-  moveFilterDown (idx) {
-    console.log(`move ${idx} down`)
+  moveFilterDownHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (i < this.filters.length - 1) {
+      this.filters.splice(i, 1)
+      this.filters.splice(i + 1, 0, filter)
+      this.renderFilters()
+    }
   }
-
 }
 
 

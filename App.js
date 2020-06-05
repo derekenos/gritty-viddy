@@ -5,6 +5,7 @@ import ImageProcessor from "./ImageProcessor.js"
 import Controls from "./Controls.js"
 import { TOPICS, publish, subscribe } from "./pubSub.js"
 import { getAudioParams } from "./lib/audio.js"
+import { getFilterById } from "./lib/utils.js"
 import { Element } from "./lib/domHelpers.js"
 
 
@@ -36,6 +37,9 @@ const STYLE = `
 
 const FILTER_PRESETS = {
   "Default": [
+    [ "brightness", { factor: "loudness * 3" } ],
+    [ "invert", { } ],
+    [ "audioPlot", { } ],
   ],
 
   "Fine Trip": [
@@ -85,11 +89,15 @@ export default class GrittyViddy extends Base {
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
 
+    subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
+
     // Create an audio buffer for realtime sampling.
     this.audioBuffer = new Uint8Array(this.videoCanvas.audioAnalyser.fftSize)
 
     // Set and publish the initial filters state.
-    this.setFilterPreset("Fine Trip")
+    this.setFilterPreset("Default")
 
     // Start processing frames.
     requestAnimationFrame(this.processFrame.bind(this))
@@ -142,14 +150,25 @@ export default class GrittyViddy extends Base {
 
   paramValueUpdateHandler ([ filterId, name, value ]) {
     // Update the local filter param and publish the new filters.
-    const filters = this.filters.filter(([ id ]) => id === filterId)
-    if (filters.length === 0) {
-      console.warn(`No matching filter for idx: ${filterIdx}`)
-      return
-    }
-    filters[0][2][name] = value
+    const [ filter ] = getFilterById(this.filters, filterId)
+    filter[2][name] = value
   }
 
+  removeFilterHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    this.filters.splice(i, 1)
+  }
+
+  moveFilterUpHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (i > 0) {
+      this.filters.splice(i, 1)
+      this.filters.splice(i - 1, filter)
+    }
+  }
+
+  moveFilterDownHandler (filterId) {
+  }
 }
 
 

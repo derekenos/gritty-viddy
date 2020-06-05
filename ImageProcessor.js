@@ -3,6 +3,7 @@ import Base from "./Base.js"
 import { TOPICS, subscribe } from "./pubSub.js"
 import { Element } from "./lib/domHelpers.js"
 import * as CPU_FILTERS from "./filters.js"
+import { getFilterById } from "./lib/utils.js"
 import * as GPU_FILTERS from "./gpuFilters.js"
 
 
@@ -99,6 +100,9 @@ export default class ImageProcessor extends Base {
 
     subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
+    subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
+    subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
   }
 
   getFilterByName (name) {
@@ -120,15 +124,35 @@ export default class ImageProcessor extends Base {
 
   paramValueUpdateHandler ([ filterId, name, value ]) {
     // Update the local filter param and publish the new filters.
-    const filters = this.filters.filter(([ id ]) => id === filterId)
-    if (filters.length === 0) {
-      console.warn(`No matching filter for idx: ${filterIdx}`)
+    const [ filter ] = getFilterById(this.filters, filterId)
+    if (!filter) {
       return
     }
-    const [, filterName,, paramsArr ] = filters[0]
+    const [, filterName,, paramsArr ] = filter
     // Find param index.
     const i = FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(filterName).indexOf(name)
     paramsArr[i] = value
+  }
+
+  removeFilterHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    this.filters.splice(i, 1)
+  }
+
+  moveFilterUpHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (i > 0) {
+      this.filters.splice(i, 1)
+      this.filters.splice(i - 1, 0, filter)
+    }
+  }
+
+  moveFilterDownHandler (filterId) {
+    const [ filter, i ] = getFilterById(this.filters, filterId)
+    if (i < this.filters.length - 1) {
+      this.filters.splice(i, 1)
+      this.filters.splice(i + 1, 0, filter)
+    }
   }
 
   process (imageData, { loudness, samples }) {
