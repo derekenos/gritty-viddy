@@ -22,9 +22,8 @@ const FILTER_PARAM_STYLE = maxContentRems => `
     font-size: 1rem;
     cursor: text;
     padding: 0;
-    width: calc(${Math.max(maxContentRems, 8)}rem - 28px);
+    width: calc(${Math.max(maxContentRems, 5)}rem - 28px);
     height: 1rem;
-    text-align: center;
   }
 
   label {
@@ -41,7 +40,7 @@ export class FilterParam extends Base {
     const filterId = this.getAttribute("filterId")
     const name = this.getAttribute("name")
     const value = this.getAttribute("value")
-    const maxContentRems = Math.floor(Math.max(name.length * .8, value.length * 1.2))
+    const maxContentRems = Math.floor(Math.max(name.length * .8, value.length * .8))
 
     super.connectedCallback(FILTER_PARAM_STYLE(maxContentRems))
 
@@ -75,17 +74,16 @@ customElements.define("filter-param", FilterParam)
 
 
 const FILTER_ROW_STYLE = `
-
   button,
   select,
   input {
-
     background-color: rgba(64, 64, 64, .8);
     color: #fff;
     border: none;
     padding: 8px 14px;
     font-size: 1.2rem;
     cursor: pointer;
+    margin: .5rem 0;
   }
 
   /* Remove the <select> button.

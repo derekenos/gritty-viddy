@@ -65,6 +65,20 @@ const STYLE = `
     margin-right: 0;
   }
 
+  .filters {
+  }
+
+  .filters > div {
+    margin-top: 1rem;
+    margin-left: 1rem;
+    opacity: 0;
+    transition: opacity .25s;
+  }
+
+  .filters > div.visible {
+    opacity: 1;
+  }
+
   .record.recording,
   .record.recording:hover {
     background-color: rgba(255, 0, 0, 1);
@@ -85,8 +99,8 @@ export default class Controls extends Base {
     this.wrapper = Element(
       `<div class="wrapper">
          <div class="filters">
-           <button>Filters</button>
-           <div>
+           <button>Hide Filters</button>
+           <div class="visible">
              <select class="filter-preset">
                <option value="">Preset: none</option>
                ${ FILTER_PRESET_NAMES.map((k, i) =>
@@ -102,10 +116,18 @@ export default class Controls extends Base {
        </div>
       `
     )
-    // Register the button click handlers.
+    this.shadow.appendChild(this.wrapper)
+
+    // Define the Filters button click handler.
+    this.wrapper.querySelector(".filters > button").addEventListener("click", e => {
+      const filtersDiv = this.wrapper.querySelector(".filters > div")
+      filtersDiv.classList.toggle("visible")
+      e.target.innerText = `${filtersDiv.classList.contains("visible") ? "Hide" : "Show"} Filters`
+    })
+
+    // Define the button click handlers.
     this.wrapper.querySelector(".fullscreen")
       .addEventListener("click", () => publish(TOPICS.FULLSCREEN_TOGGLE))
-    this.shadow.appendChild(this.wrapper)
 
     // Allow fullscreen to be controlled by the "f" key.
     window.addEventListener("keydown", e => {
@@ -131,7 +153,6 @@ export default class Controls extends Base {
 
     this.wrapper.querySelector(".add-filter")
       .addEventListener("click", this.addFilter.bind(this))
-
 
     subscribe(TOPICS.FILTER_CHANGE, this.filterChangeHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
