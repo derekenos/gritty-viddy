@@ -2,6 +2,7 @@
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
+import { TOPICS, publish } from "./pubSub.js"
 
 
 const STYLE = `
@@ -72,13 +73,13 @@ export default class Controls extends Base {
     )
     // Register the button click handlers.
     this.wrapper.querySelector(".fullscreen")
-      .addEventListener("click", this.toggleFullscreen.bind(this))
+      .addEventListener("click", () => publish(TOPICS.FULLSCREEN_TOGGLE))
     this.shadow.appendChild(this.wrapper)
 
     // Allow fullscreen to be controlled by the "f" key.
     window.addEventListener("keydown", e => {
       if (e.key === "f") {
-        this.toggleFullscreen()
+        publish(TOPICS.FULLSCREEN_TOGGLE)
       }
     })
 
@@ -95,20 +96,15 @@ export default class Controls extends Base {
     }
   }
 
-  setFullscreenElement (el) {
-    // Set the element on which to requestFullscreen().
-    this.fullscreenElement = el
-  }
-
   renderFilters () {
     // (re)Render the filters list.
     const filtersEl = this.wrapper.querySelector(".filters > ol")
     // Remove all existing filter rows.
     Array.from(filtersEl.children).forEach(x => x.remove())
     // Add all the current rows.
-    this.filters.forEach(([ filterName, filterParams ]) => {
+    this.filters.forEach(([ filterName, filterParams ], idx) => {
       const filterRow = Element(
-        `<filter-row name="${filterName}"></filter-row>`
+        `<filter-row name="${filterName}" idx="${idx}"></filter-row>`
       )
       for (let [k, v] of Object.entries(filterParams)) {
         filterRow.dataset[k] = v
@@ -116,15 +112,6 @@ export default class Controls extends Base {
       filtersEl.appendChild(filterRow)
     })
   }
-
-  toggleFullscreen () {
-    if (document.fullscreenElement !== null) {
-      document.exitFullscreen()
-    } else {
-      this.fullscreenElement.requestFullscreen()
-    }
-  }
-
 }
 
 

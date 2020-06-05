@@ -1,5 +1,6 @@
 
 import Base from "./Base.js"
+import { TOPICS, subscribe } from "./pubSub.js"
 import { Element } from "./lib/domHelpers.js"
 import * as CPU_FILTERS from "./filters.js"
 import * as GPU_FILTERS from "./gpuFilters.js"
@@ -78,6 +79,7 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
+    subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
 
     this.ready = true
   }
@@ -93,14 +95,31 @@ export default class ImageProcessor extends Base {
     if (Object.keys(filterParamsObj).length === 0) {
       filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
     }
-    const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
-    this.filters.push([ filterFn, filterParamsArr ])
+    this.filters.push([ filterName, filterFn, filterParamsObj ])
   }
 
   process (imageData) {
+    // Convert this.filters to the [ [ <filterFn>, <paramsArr> ], ... ]
+    // that applyFilters() expects.
+    const filters = this.filters.map(([ filterName, filterFn, filterParamsObj ]) => [
+      filterFn, paramsObjectToArray(filterName, filterParamsObj)
+    ])
     imageData = (this.useGPU ? GPU_FILTERS : CPU_FILTERS)
-      .applyFilters(this.filters, imageData)
+      .applyFilters(filters, imageData)
     this.canvasCtx.putImageData(imageData, 0, 0)
+  }
+
+  paramValueUpdateHandler ([ filterIdx, name, value ]) {
+    let evalResult
+    try {
+      evalResult = parseInt(eval(value))
+    } catch (e) {
+    }
+    if (!(typeof evalResult === "number") || Number.isNaN(evalResult)) {
+      console.warn(`eval did not yield number on: ${value}`)
+      return
+    }
+    this.filters[filterIdx][2][name] = evalResult
   }
 }
 

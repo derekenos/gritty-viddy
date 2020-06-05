@@ -1,7 +1,8 @@
 
 import Base from "./Base.js"
-import { Element } from "./lib/domHelpers.js"
 import { FILTER_NAME_PARAM_KEY_ARR_POS_MAP } from "./ImageProcessor.js"
+import { TOPICS, publish } from "./pubSub.js"
+import { Element } from "./lib/domHelpers.js"
 
 
 const FILTER_PARAM_STYLE = maxContentRems => `
@@ -35,6 +36,7 @@ const FILTER_PARAM_STYLE = maxContentRems => `
 
 export class FilterParam extends Base {
   connectedCallback () {
+    const filterIdx = this.getAttribute("filterIdx")
     const name = this.getAttribute("name")
     const value = this.getAttribute("value")
     const maxContentRems = Math.floor(Math.max(name.length * .8, value.length * 1.2))
@@ -44,13 +46,23 @@ export class FilterParam extends Base {
     const el = Element(
       `<span class="wrapper">
          <label>${name}</label>
-         <input type="text" value="${value}" name="${name}">
+         <input type="text" value="${value}" name="${name}" filterIdx="${filterIdx}">
        </span>
       `
     )
-
     this.shadow.appendChild(el)
+
+    this.shadow.addEventListener("input", this.paramValueChangeHandler)
   }
+
+  paramValueChangeHandler (e) {
+    const param = e.target
+    const filterIdx = param.getAttribute("filterIdx")
+    const name = param.getAttribute("name")
+    const value = param.value
+    publish(TOPICS.PARAMS_UPDATE, [ filterIdx, name, value ])
+  }
+
 }
 
 
@@ -91,6 +103,7 @@ export default class FilterRow extends Base {
     super.connectedCallback(FILTER_ROW_STYLE)
 
     const name = this.getAttribute("name")
+    const idx = this.getAttribute("idx")
 
     const el = Element(
       `<li>
@@ -122,12 +135,12 @@ export default class FilterRow extends Base {
     const filterParams = el.querySelector(".filter-params")
     for (let paramName of FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(name)) {
       filterParams.appendChild(Element(
-        `<filter-param name="${paramName}" value="${this.dataset[paramName]}">
+        `<filter-param filterIdx="${idx}" name="${paramName}"
+                       value="${this.dataset[paramName]}">
          </filter-param>
         `
       ))
     }
-
     this.shadow.appendChild(el)
   }
 }
