@@ -18,10 +18,37 @@ const FINAL_SCALE = USE_GPU ? 1 : 1 / 4
 const FINAL_WIDTH = SOURCE_WIDTH * FINAL_SCALE
 const FINAL_HEIGHT = SOURCE_HEIGHT * FINAL_SCALE
 
+// The filter functions need params to be a positionally-mapped array of
+// scalars because that's what gpu.js can deal with, but UI-wise, it's better
+// for us to deal in named parameters, so this maps the param names to their
+// array position so that we can do the translation on filter function call.
+const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
+  [ "threshold", [ "threshold" ] ],
+  [ "brightness", [ "factor" ] ],
+  [ "channel", [ "keepR", "keepG", "keepB" ] ],
+  [ "colorGain", [ "rGain", "gGain", "bGain" ] ],
+  [ "colorReducer", [ "mask" ] ],
+  [ "rowBlanker", [ "nth" ] ],
+  [ "colBlanker", [ "nth" ] ],
+  [ "invert", [ ] ],
+  [ "audioPlot", [ ] ],
+  [ "flipHorizontal", [ ] ],
+  [ "verticalMirror", [ ] ],
+  [ "horizontalMirror", [ ] ],
+])
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility Functions
 ///////////////////////////////////////////////////////////////////////////////
+
+const getFilterByName = name => FILTERS[`${name}Filter`]
+
+
+// Return the object-type filter function params as a positionally mapped array.
+const paramsObjectToArray = (filterName, paramsObj) =>
+  FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(filterName).map(k => paramsObj[k])
+
 
 async function initInputStreams () {
   /*
@@ -140,6 +167,61 @@ function captureVideoFrame (video, canvas) {
 }
 
 
+function renderFilters (filters) {
+  /*
+     Render the specified filter chain to the UI.
+   */
+  const filtersEl = document.getElementById("filters")
+  const FILTER_ROW_TEMPLATE = document.getElementById("filter-row")
+  const FILTER_PARAM_TEMPLATE = document.getElementById("filter-param")
+
+  // Define remove and move button handlers.
+  const removeHandler = e => e.target.parentElement.remove()
+
+  const moveUpHandler = e => {
+    const filterRowEl = e.target.parentElement
+    const targetEl = filterRowEl.previousElementSibling
+    if (targetEl) {
+      filterRowEl.parentElement.insertBefore(filterRowEl, targetEl)
+    }
+  }
+
+  const moveDownHandler = e => {
+    const filterRowEl = e.target.parentElement
+    const nextEl = filterRowEl.nextElementSibling
+    const nextNextEl = nextEl?.nextElementSibling
+    if (nextNextEl) {
+      filterRowEl.parentElement.insertBefore(filterRowEl, nextNextEl)
+    } else if (nextEl) {
+      filterRowEl.parentElement.appendChild(filterRowEl)
+    }
+  }
+
+  // Remove all existing filter rows.
+  Array.from(filtersEl.children).forEach(x => x.remove())
+  // Add a new row for each filter.
+  for (const [ filterName, params ] of filters) {
+    const filterEl = FILTER_ROW_TEMPLATE.content.cloneNode(true)
+    // Add the remove and move handlers.
+    filterEl.querySelector(".remove").addEventListener("click", removeHandler)
+    filterEl.querySelector(".move-up").addEventListener("click", moveUpHandler)
+    filterEl.querySelector(".move-down").addEventListener("click", moveDownHandler)
+
+    filterEl.querySelector(`option[value="${filterName}"]`).selected = true
+    // Add a param element for each param.
+    const paramsEl = filterEl.querySelector(".filter-params")
+    for (let paramName of FILTER_NAME_PARAM_KEY_ARR_POS_MAP.get(filterName)) {
+      const paramEl = FILTER_PARAM_TEMPLATE.content.cloneNode(true)
+      const paramLabelEl = paramEl.querySelector("label")
+      paramLabelEl.textContent = paramName
+      const paramInputEl = paramEl.querySelector("input")
+      paramInputEl.value = params[paramName]
+      paramsEl.appendChild(paramEl)
+    }
+    filtersEl.appendChild(filterEl)
+  }
+}
+
 const PRESET_FILTERS = {
   NONE: params => [
     //[ FILTERS.thresholdFilter, [ 255 - normalizedLoudness * 2 * 255 ] ],
@@ -156,27 +238,61 @@ const PRESET_FILTERS = {
     //[ FILTERS.horizontalMirrorFilter, [ ] ],
   ],
 
-  TRIPPY_MIRROR: params => [
-    [ FILTERS.thresholdFilter, [ 255 - params.normalizedLoudness * 2 * 255 ] ],
-    [ FILTERS.brightnessFilter, [ 0 + params.normalizedLoudness * 3] ],
-    [ FILTERS.invertFilter, [ ] ],
-    [ FILTERS.audioPlotFilter, params.scaledNormalizedSamples ],
-    [ FILTERS.verticalMirrorFilter, [ ] ],
-    [ FILTERS.horizontalMirrorFilter, [ ] ],
+  TRIPPY_MIRROR: [
+    [ "threshold", { threshold: "255 - loudness * 2 * 255" } ],
+    [ "brightness", { factor: "loudness * 3" } ],
+    [ "invert", {} ],
+    [ "audioPlot", { } ],
+    [ "verticalMirror", { } ],
+    [ "horizontalMirror", { } ],
   ]
 }
 
 
 function getFilters (audioAnalyser, audioBuffer) {
+  /*
+     Return the configured filter chain array with params objects interpolated
+     with any realtime values and converted to positional arrays.
+   */
   // Get audio data that we can use to modify the filter parameters.
   const {
     normalizedLoudness,
     scaledNormalizedSamples
   } = getAudioParams(audioAnalyser, audioBuffer)
 
-  const params = { normalizedLoudness, scaledNormalizedSamples }
+  // Read the current filter chain from the UI.
+  const filterChain = []
+  Array.from(document.getElementById("filters").children).forEach(filterRow => {
+    const filterName = filterRow.querySelector(".filter").value
 
-  return PRESET_FILTERS.TRIPPY_MIRROR(params)
+    let paramsArr = []
+    if (filterName === "audioPlot") {
+      // The audioPlot filter is special in that it gets the whole audio sample
+      // array as its single argument.
+      paramsArr = scaledNormalizedSamples
+    } else {
+      Array.from(filterRow.querySelector(".filter-params").children)
+           .forEach(paramsEl => {
+             // Replace referencing to realtime param values, and eval the input string
+             // to get the number.
+             let paramValue
+             const paramInputValue = paramsEl.querySelector("input").value
+             try {
+               paramValue = eval(
+                 paramInputValue.replace(/loudness/g, normalizedLoudness)
+               )
+               // Catch case where eval-ing an empty string produces undefined.
+               paramValue = paramValue ?? 0
+             } catch (e) {
+               paramValue = 0
+             }
+             paramsArr.push(paramValue)
+           })
+    }
+    filterChain.push([ getFilterByName(filterName), paramsArr ])
+  })
+
+  return filterChain
 }
 
 
@@ -235,4 +351,6 @@ export async function init () {
   requestAnimationFrame(
     () => process(audioAnalyser, audioBuffer, video, workCanvas, finalCanvas)
   )
+
+  renderFilters(PRESET_FILTERS.TRIPPY_MIRROR)
 }
