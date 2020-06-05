@@ -1,7 +1,8 @@
 
 import Base from "./Base.js"
 import { FILTER_NAME_PARAM_KEY_ARR_POS_MAP } from "./ImageProcessor.js"
-import { TOPICS, publish } from "./pubSub.js"
+import { publish } from "./pubSub.js"
+import { TOPICS } from "./lib/constants.js"
 import { Element } from "./lib/domHelpers.js"
 
 
@@ -21,7 +22,7 @@ const FILTER_PARAM_STYLE = maxContentRems => `
     font-size: 1.2rem;
     cursor: text;
     padding: 0;
-    width: calc(${maxContentRems}rem - 28px);
+    width: calc(${Math.max(maxContentRems, 4)}rem - 28px);
     text-align: center;
   }
 

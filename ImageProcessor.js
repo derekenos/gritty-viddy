@@ -1,9 +1,10 @@
 
 import Base from "./Base.js"
-import { TOPICS, subscribe } from "./pubSub.js"
+import { TOPICS, FILTER_PRESETS } from "./lib/constants.js"
+import { subscribe } from "./pubSub.js"
 import { Element } from "./lib/domHelpers.js"
-import * as CPU_FILTERS from "./filters.js"
 import { getFilterById } from "./lib/utils.js"
+import * as CPU_FILTERS from "./filters.js"
 import * as GPU_FILTERS from "./gpuFilters.js"
 
 
@@ -98,20 +99,23 @@ export default class ImageProcessor extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
     this.wrapper.appendChild(this.canvas)
 
-    subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
     subscribe(TOPICS.PARAMS_UPDATE, this.paramValueUpdateHandler.bind(this))
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
+    subscribe(TOPICS.PRESET_CHANGE, this.presetChangeHandler.bind(this))
   }
 
   getFilterByName (name) {
     return (this.useGPU ? GPU_FILTERS : CPU_FILTERS)[`${name}Filter`]
   }
 
-  filtersUpdatedHandler (filters) {
+  presetChangeHandler (presetName) {
+    if (!presetName) {
+      return
+    }
     this.filters = []
-    filters.forEach(([ filterId, filterName, filterParamsObj ]) => {
+    FILTER_PRESETS[presetName].forEach(([ filterId, filterName, filterParamsObj ]) => {
       const filterFn = this.getFilterByName(filterName)
       // If a params obj wasn't specified, use the defaults.
       if (Object.keys(filterParamsObj).length === 0) {

@@ -2,18 +2,30 @@
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
 import { Element } from "./lib/domHelpers.js"
-import { TOPICS, subscribe, publish } from "./pubSub.js"
+import { TOPICS, FILTER_PRESETS } from "./lib/constants.js"
 import { getFilterById } from "./lib/utils.js"
+import { subscribe, publish } from "./pubSub.js"
 
 
 const STYLE = `
-  button {
+  button,
+  select {
     background-color: rgba(64, 64, 64, .8);
     color: #fff;
     border: none;
     padding: 8px 14px;
     font-size: 1.2rem;
     cursor: pointer;
+  }
+
+  /* Remove the <select> button.
+     https://stackoverflow.com/a/20464860/2327940
+   */
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
   }
 
   button:hover {
@@ -35,12 +47,16 @@ const STYLE = `
     margin: 0 4px;
   }
 
-  .wrapper > span:first-child {
+  .wrapper > div {
+    display: inline-block;
+  }
+
+  .wrapper > div:first-child {
     flex-grow: 1;
     margin-left: 0;
   }
 
-  .wrapper > span:last-child {
+  .wrapper > div:last-child {
     margin-right: 0;
   }
 
@@ -63,12 +79,18 @@ export default class Controls extends Base {
 
     this.wrapper = Element(
       `<div class="wrapper">
-         <span class="filters">
+         <div class="filters">
            <button>Filters</button>
-           <ol></ol>
-         </span>
-         <span><button class="record">Record</button></span>
-         <span><button class="fullscreen">&#8644;</button></span>
+           <div>
+             <select class="filter-preset">
+               <option value="">Preset: none</option>
+               ${ Object.keys(FILTER_PRESETS).map(k => `<option value="${k}">Preset: ${k}</option>`).join('\n') }
+             </select>
+             <ol></ol>
+           </div>
+         </div>
+         <div><button class="record">Record</button></div>
+         <div><button class="fullscreen">&#8644;</button></div>
        </div>
       `
     )
@@ -84,7 +106,16 @@ export default class Controls extends Base {
       }
     })
 
-    subscribe(TOPICS.FILTERS_UPDATED, this.filtersUpdatedHandler.bind(this))
+    // Define a preset change handler.
+    this.wrapper.querySelector(".filter-preset").addEventListener("change", e => {
+      const presetName = e.target.value
+      publish(TOPICS.PRESET_CHANGE, presetName)
+      if (presetName) {
+        this.filters = FILTER_PRESETS[presetName]
+        this.renderFilters()
+      }
+    })
+
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
@@ -92,7 +123,7 @@ export default class Controls extends Base {
 
   renderFilters () {
     // (re)Render the filters list.
-    const filtersEl = this.wrapper.querySelector(".filters > ol")
+    const filtersEl = this.wrapper.querySelector("ol")
     // Remove all existing filter rows.
     Array.from(filtersEl.children).forEach(x => x.remove())
     // Add all the current rows.
@@ -105,11 +136,6 @@ export default class Controls extends Base {
       }
       filtersEl.appendChild(filterRow)
     })
-  }
-
-  filtersUpdatedHandler (filters) {
-    this.filters = filters
-    this.renderFilters()
   }
 
   removeFilterHandler (filterId) {
