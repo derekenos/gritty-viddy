@@ -102,10 +102,6 @@ export default class ImageProcessor extends Base {
     // function object itself and a params object converted to an array.
     const [ filterId, filterName, filterParamsObj ] = filter
     const filterFn = this.getFilterByName(filterName)
-    // If a params obj wasn't specified, use the defaults.
-    if (Object.keys(filterParamsObj).length === 0) {
-      filterParamsObj = FILTER_NAME_PARAM_DEFAULT_MAP.get(filterName)
-    }
     const filterParamsArr = paramsObjectToArray(filterName, filterParamsObj)
     return [ filterId, filterName, filterFn, filterParamsArr ]
   }
@@ -123,7 +119,9 @@ export default class ImageProcessor extends Base {
 
   presetChangeHandler (presetName) {
     if (presetName) {
-      this.filters = FILTER_PRESETS[presetName].map(this.convertIncomingFilter)
+      this.filters = FILTER_PRESETS[presetName].map(
+        this.convertIncomingFilter.bind(this)
+      )
     }
   }
 

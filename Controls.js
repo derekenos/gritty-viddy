@@ -88,7 +88,9 @@ export default class Controls extends Base {
            <div>
              <select class="filter-preset">
                <option value="">Preset: none</option>
-               ${ Object.keys(FILTER_PRESETS).map(k => `<option value="${k}">Preset: ${k}</option>`).join('\n') }
+               ${ Object.keys(FILTER_PRESETS).map((k, i) =>
+                    `<option value="${k}">Preset: ${k}</option>`
+                  ).join('\n') }
              </select>
              <ol></ol>
              <button class="add-filter">Add Filter</button>

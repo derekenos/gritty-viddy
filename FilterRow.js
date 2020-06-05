@@ -15,14 +15,15 @@ const FILTER_PARAM_STYLE = maxContentRems => `
     padding: calc(8px + 1rem) 14px 8px 14px;
   }
 
-  input {
+  textarea {
     background-color: transparent;
     border: none;
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: text;
     padding: 0;
-    width: calc(${Math.max(maxContentRems, 4)}rem - 28px);
+    width: calc(${Math.max(maxContentRems, 8)}rem - 28px);
+    height: 1rem;
     text-align: center;
   }
 
@@ -47,7 +48,7 @@ export class FilterParam extends Base {
     const el = Element(
       `<span class="wrapper">
          <label>${name}</label>
-         <input type="text" value="${value}" name="${name}" filterId="${filterId}">
+         <textarea name="${name}" filterId="${filterId}">${value}</textarea>
        </span>
       `
     )
@@ -72,9 +73,11 @@ customElements.define("filter-param", FilterParam)
 
 
 const FILTER_ROW_STYLE = `
+
   button,
-  input,
-  select {
+  select,
+  input {
+
     background-color: rgba(64, 64, 64, .8);
     color: #fff;
     border: none;
