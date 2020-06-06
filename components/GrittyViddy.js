@@ -1,13 +1,13 @@
 
 import Base from "./Base.js"
-import VideoCanvas from "./VideoCanvas.js"
-import ImageProcessor from "./ImageProcessor.js"
 import Controls from "./Controls.js"
-import { TOPICS } from "./lib/constants.js"
-import { publish, subscribe } from "./pubSub.js"
-import { getAudioParams } from "./lib/audio.js"
-import { getFilterById } from "./lib/utils.js"
-import { Element } from "./lib/domHelpers.js"
+import ImageProcessor from "./ImageProcessor.js"
+import VideoCanvas from "./VideoCanvas.js"
+import { getAudioParams } from "../lib/audio.js"
+import { TOPICS } from "../lib/constants.js"
+import { Element } from "../lib/domHelpers.js"
+import { publish, subscribe } from "../lib/pubSub.js"
+import { getFilterById } from "../lib/utils.js"
 
 
 const STYLE = `

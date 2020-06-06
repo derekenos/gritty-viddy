@@ -1,9 +1,9 @@
 
 import Base from "./Base.js"
 import { FILTER_NAME_PARAM_KEY_ARR_POS_MAP } from "./ImageProcessor.js"
-import { publish } from "./pubSub.js"
-import { TOPICS } from "./lib/constants.js"
-import { Element } from "./lib/domHelpers.js"
+import { TOPICS } from "../lib/constants.js"
+import { Element } from "../lib/domHelpers.js"
+import { publish } from "../lib/pubSub.js"
 
 
 const FILTER_PARAM_STYLE = maxContentRems => `

@@ -22,7 +22,7 @@
     ]
   },
   "scripts": {
-    "build:js": "babel App.js -d build",
+    "build:js": "babel components/GrittyViddy.js -d build",
     "build:webpack": "npx webpack --mode=development",
     "build": "npm run build:js && npm run build:webpack"
   },

@@ -6,7 +6,7 @@ const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin
 
 module.exports = {
   entry: {
-    'app': './App.js',
+    'gritty-viddy': './components/GrittyViddy.js',
   },
   output: {
     path: path.join(__dirname, "build/dist"),

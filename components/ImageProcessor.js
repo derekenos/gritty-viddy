@@ -1,12 +1,15 @@
 
 import Base from "./Base.js"
-import { TOPICS, FILTER_PRESETS } from "./lib/constants.js"
-import { subscribe } from "./pubSub.js"
-import { FILTER_NAME_PARAM_DEFAULT_MAP } from "./lib/constants.js"
-import { Element } from "./lib/domHelpers.js"
-import { getFilterById } from "./lib/utils.js"
-import * as CPU_FILTERS from "./filters.js"
-import * as GPU_FILTERS from "./gpuFilters.js"
+import {
+  FILTER_NAME_PARAM_DEFAULT_MAP,
+  FILTER_PRESETS,
+  TOPICS,
+} from "../lib/constants.js"
+import { Element } from "../lib/domHelpers.js"
+import * as CPU_FILTERS from "../lib/filters.js"
+import * as GPU_FILTERS from "../lib/gpuFilters.js"
+import { subscribe } from "../lib/pubSub.js"
+import { getFilterById } from "../lib/utils.js"
 
 
 const STYLE = `

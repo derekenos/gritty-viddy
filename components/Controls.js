@@ -1,15 +1,15 @@
 
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
-import { Element } from "./lib/domHelpers.js"
 import {
-  TOPICS,
+  FILTER_NAME_PARAM_DEFAULT_MAP,
   FILTER_PRESET_NAMES,
   FILTER_PRESETS,
-  FILTER_NAME_PARAM_DEFAULT_MAP
-} from "./lib/constants.js"
-import { getFilterById } from "./lib/utils.js"
-import { subscribe, publish } from "./pubSub.js"
+  TOPICS,
+} from "../lib/constants.js"
+import { Element } from "../lib/domHelpers.js"
+import { subscribe, publish } from "../lib/pubSub.js"
+import { getFilterById } from "../lib/utils.js"
 
 
 const STYLE = `

@@ -1,6 +1,6 @@
 
 import Base from "./Base.js"
-import { Element } from "./lib/domHelpers.js"
+import { Element } from "../lib/domHelpers.js"
 
 
 const STYLE = `
