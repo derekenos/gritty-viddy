@@ -25,7 +25,7 @@
     "build:js": "babel components/GrittyViddy.js -d build",
     "build:webpack": "npx webpack --mode=development",
     "build": "npm run build:js && npm run build:webpack",
-    "serve": "serve"
+    "dev": "serve"
   },
   "author": "",
   "license": "ISC",
