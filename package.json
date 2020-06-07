@@ -24,7 +24,8 @@
   "scripts": {
     "build:js": "babel components/GrittyViddy.js -d build",
     "build:webpack": "npx webpack --mode=development",
-    "build": "npm run build:js && npm run build:webpack"
+    "build": "npm run build:js && npm run build:webpack",
+    "serve": "serve"
   },
   "author": "",
   "license": "ISC",
@@ -35,6 +36,7 @@
     "html-webpack-inline-source-plugin": "0.0.10",
     "install": "^0.13.0",
     "npm": "^6.14.4",
+    "serve": "^11.3.2",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   },
