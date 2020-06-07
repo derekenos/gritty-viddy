@@ -1,14 +1,18 @@
 {
-  "name": "web-components",
+  "name": "gritty-viddy",
   "version": "1.0.0",
-  "description": "",
-  "private": true,
+  "description": "Realish-time in-browser video effects using vanilla Javascript.",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/derekenos/gritty-viddy.git"
+  },
   "browserslist": [
-    "last 1 chrome version",
-    "last 1 firefox version",
-    "last 1 safari version",
-    "last 1 ios version",
-    "last 1 edge version"
+    "chrome >= 78",
+    "firefox >= 71",
+    "safari >= 13",
+    "ios >= 13.2",
+    "edge >= 18"
   ],
   "babel": {
     "presets": [
