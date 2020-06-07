@@ -16,7 +16,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       inlineSource: ".(js|css)$",
       title: "Gritty Viddy",
-      template: "single-index.html",
+      template: "standalone-index-template.html",
       inject: "head"
     }),
     new HtmlWebpackInlineSourcePlugin()
