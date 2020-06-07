@@ -53,6 +53,11 @@ export class FilterParam extends Base {
     )
     this.shadow.appendChild(el)
 
+    // Select the textarea text on focus.
+    el.querySelector("textarea").addEventListener("focus", e => {
+      e.target.select()
+    })
+
     this.shadow.addEventListener("input", this.paramValueChangeHandler)
     // Stop keypress propagation to prevent trigger shortcuts when
     // editing text fields.
