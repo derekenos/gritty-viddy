@@ -36,6 +36,7 @@ export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
   [ "flipHorizontal", [ ] ],
   [ "verticalMirror", [ ] ],
   [ "horizontalMirror", [ ] ],
+  [ "blur", [ "level" ] ],
 ])
 
 
