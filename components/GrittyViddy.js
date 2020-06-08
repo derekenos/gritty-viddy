@@ -42,6 +42,7 @@ export default class GrittyViddy extends Base {
 
     this.videoWidth = parseInt(this.getAttribute("width") || "1280")
     this.videoHeight = parseInt(this.getAttribute("height") || "720")
+    const noGPU = this.hasAttribute("no-gpu")
 
     this.wrapper = Element(`<div class="wrapper"></div>`)
     this.shadow.appendChild(this.wrapper)
@@ -54,7 +55,8 @@ export default class GrittyViddy extends Base {
     this.wrapper.appendChild(this.videoCanvas)
 
     this.imageProcessor = Element(
-      `<image-processor width="${this.videoWidth}" height="${this.videoHeight}">
+      `<image-processor ${noGPU ? "no-gpu " : ""}
+                        width="${this.videoWidth}" height="${this.videoHeight}">
        </image-processor>
       `
     )
