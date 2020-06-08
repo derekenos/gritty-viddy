@@ -133,6 +133,7 @@ export default class FilterRow extends Base {
            <option value="flipHorizontal">Flip Horizontal</option>
            <option value="verticalMirror">Vertical Mirror</option>
            <option value="horizontalMirror">Horizontal Mirror</option>
+           <option value="blur">Blur</option>
          </select>
          <span class="filter-params"></span>
        </li>

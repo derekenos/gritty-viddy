@@ -36,6 +36,7 @@ export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
   [ "flipHorizontal", [ ] ],
   [ "verticalMirror", [ ] ],
   [ "horizontalMirror", [ ] ],
+  [ "blur", [ "level" ] ],
 ])
 
 
@@ -66,7 +67,7 @@ function evalParamsArr (paramsArr, { loudness, samples }) {
 export default class ImageProcessor extends Base {
   constructor () {
     super()
-    this.useGPU = true
+    this.useGPU = false
     this.filters = []
   }
 
@@ -75,6 +76,7 @@ export default class ImageProcessor extends Base {
 
     this.width = parseInt(this.getAttribute("width") || "1280")
     this.height = parseInt(this.getAttribute("height") || "720")
+    this.useGPU = !this.hasAttribute("no-gpu")
 
     this.wrapper = Element(`<div></div>`)
     this.shadowRoot.appendChild(this.wrapper)
