@@ -129,6 +129,9 @@ export default class Controls extends Base {
     this.wrapper.querySelector(".fullscreen")
       .addEventListener("click", () => publish(TOPICS.FULLSCREEN_TOGGLE))
 
+    this.wrapper.querySelector(".record")
+      .addEventListener("click", this.recordClickHandler.bind(this))
+
     // Allow fullscreen to be controlled by the "f" key.
     window.addEventListener("keydown", e => {
       if (e.key === "f") {
@@ -185,6 +188,19 @@ export default class Controls extends Base {
       }
       filtersEl.appendChild(filterRow)
     })
+  }
+
+  recordClickHandler (e) {
+    const target = e.target
+    if (target.textContent === "Record") {
+      publish(TOPICS.RECORD_START)
+      target.textContent = "Stop"
+      target.classList.add("recording")
+    } else {
+      publish(TOPICS.RECORD_STOP)
+      target.textContent = "Record"
+      target.classList.remove("recording")
+    }
   }
 
   filterChangeHandler ([ filterId, newFilterName ]) {

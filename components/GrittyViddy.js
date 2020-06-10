@@ -4,6 +4,7 @@ import Controls from "./Controls.js"
 import ImageProcessor from "./ImageProcessor.js"
 import VideoCanvas from "./VideoCanvas.js"
 import { getAudioParams } from "../lib/audio.js"
+import CanvasRecorder from "../lib/canvasRecorder.js"
 import { TOPICS } from "../lib/constants.js"
 import { Element } from "../lib/domHelpers.js"
 import { publish, subscribe } from "../lib/pubSub.js"
@@ -65,7 +66,15 @@ export default class GrittyViddy extends Base {
     this.controls = Element(`<con-trols></con-trols>`)
     this.wrapper.appendChild(this.controls)
 
+    // Initialize the canvas recorder.
+    this.recorder = new CanvasRecorder(
+      this.imageProcessor.canvas,
+      this.videoCanvas.audioTrack,
+    )
+
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
+    subscribe(TOPICS.RECORD_START, () => this.recorder.start())
+    subscribe(TOPICS.RECORD_STOP, () => this.recorder.stop())
 
     // Create an audio buffer for realtime sampling.
     this.audioBuffer = new Uint8Array(this.videoCanvas.audioAnalyser.fftSize)
