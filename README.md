@@ -2,6 +2,8 @@
 
 Realish-time in-browser video effects using vanilla Javascript.
 
+![Screenshot from 2020-06-10 11-29-23](https://user-images.githubusercontent.com/585182/84287396-da15ae80-ab0d-11ea-9786-4d5c0770ebad.png)
+
 
 ## Install the Development Dependencies
 
@@ -27,3 +29,19 @@ npm run build
 ```
 
 You'll find the result at: `build/dist/index.html`
+
+
+## Editing Filter Parameters
+
+Each filter parameter textarea input supports arbitrary Javascript expressions and is [`eval()`'d to produce a `number`](https://github.com/derekenos/gritty-viddy/blob/master/components/ImageProcessor.js#L48-L64) before passing the value to the underlying filter function. If the expression does not produce a `number`, the video stream will pause until you give it what it wants.
+
+This means that you have the entire browser Javascript API at your disposal, allowing you to specify dynamic values like `Date.now()` and `Math.random()` in your filter params.
+
+The following application-specific variables (created by [getAudioParams()](https://github.com/derekenos/gritty-viddy/blob/master/lib/audio.js#L34-L58)) are also supported in the filter params:
+
+- `loudness` - The loudness of the audio in the range `0.0 - 1.0`
+- `samples` - The array of 8-bit audio samples for the current frame (not really useful for most filters but is implicitly [used as the sole argument to the Audio Plot filter](https://github.com/derekenos/gritty-viddy/blob/master/components/ImageProcessor.js#L180-L181))
+
+
+
+
