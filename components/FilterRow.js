@@ -134,6 +134,7 @@ export default class FilterRow extends Base {
            <option value="verticalMirror">Vertical Mirror</option>
            <option value="horizontalMirror">Horizontal Mirror</option>
            <option value="blur">Blur</option>
+           <option value="panZoom">Pan / Zoom</option>
          </select>
          <span class="filter-params"></span>
        </li>
