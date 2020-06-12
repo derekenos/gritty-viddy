@@ -14,6 +14,7 @@ export default class VideoCanvas extends Base {
   connectedCallback () {
     super.connectedCallback(STYLE)
 
+    this.deviceId = this.getAttribute("deviceId") || undefined
     this.width = parseInt(this.getAttribute("width") || "1280")
     this.height = parseInt(this.getAttribute("height") || "720")
 
@@ -33,13 +34,19 @@ export default class VideoCanvas extends Base {
     this.canvasCtx = this.canvas.getContext("2d")
 
     // Start the audio/video input stream.
-    navigator.mediaDevices.getUserMedia({
+    const constraints = {
       audio: true,
       video: {
         width: this.width,
         height: this.height,
       }
-    }).then(stream => this.shadow.querySelector("video").srcObject = stream)
+    }
+    if (this.deviceId !== undefined) {
+        constraints.video.deviceId = { exact: this.deviceId }
+    }
+    navigator
+      .mediaDevices.getUserMedia(constraints)
+      .then(stream => this.shadow.querySelector("video").srcObject = stream)
 
     // Get the audio stream.
     // from: https://stackoverflow.com/a/52400024/2327940
