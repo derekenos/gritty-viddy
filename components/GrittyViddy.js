@@ -38,7 +38,7 @@ const STYLE = `
 
 
 export default class GrittyViddy extends Base {
-  connectedCallback () {
+  async connectedCallback () {
     super.connectedCallback(STYLE)
 
     this.videoWidth = parseInt(this.getAttribute("width") || "1280")
@@ -48,13 +48,15 @@ export default class GrittyViddy extends Base {
     this.wrapper = Element(`<div class="wrapper"></div>`)
     this.shadow.appendChild(this.wrapper)
 
-    this.videoCanvas = Element(
-      `<video-canvas width="${this.videoWidth}" height="${this.videoHeight}">
-       </video-canvas>
-      `
-    )
-    this.wrapper.appendChild(this.videoCanvas)
+    this.controls = Element(`<con-trols></con-trols>`)
+    this.wrapper.appendChild(this.controls)
 
+    // Initialize the first VideoCanvas.
+    this.videoCanvases = []
+    await this.addFeedHandler()
+    this.activeVideoCanvasIndex = 0
+
+    // Initialize the ImageProcessor.
     this.imageProcessor = Element(
       `<image-processor ${noGPU ? "no-gpu " : ""}
                         width="${this.videoWidth}" height="${this.videoHeight}">
@@ -63,21 +65,20 @@ export default class GrittyViddy extends Base {
     )
     this.wrapper.appendChild(this.imageProcessor)
 
-    this.controls = Element(`<con-trols></con-trols>`)
-    this.wrapper.appendChild(this.controls)
-
     // Initialize the canvas recorder.
     this.recorder = new CanvasRecorder(
       this.imageProcessor.canvas,
-      this.videoCanvas.audioTrack,
+      this.videoCanvases[0].audioTrack,
     )
 
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
+    subscribe(TOPICS.ADD_FEED, this.addFeedHandler.bind(this))
+    subscribe(TOPICS.SWITCH_FEED, this.switchFeedHandler.bind(this))
     subscribe(TOPICS.RECORD_START, () => this.recorder.start())
     subscribe(TOPICS.RECORD_STOP, () => this.recorder.stop())
 
     // Create an audio buffer for realtime sampling.
-    this.audioBuffer = new Uint8Array(this.videoCanvas.audioAnalyser.fftSize)
+    this.audioBuffer = new Uint8Array(this.videoCanvases[0].audioAnalyser.fftSize)
 
     // Start processing frames.
     requestAnimationFrame(this.processFrame.bind(this))
@@ -85,11 +86,13 @@ export default class GrittyViddy extends Base {
 
   processFrame () {
     const { loudness, samples } = getAudioParams(
-      this.videoCanvas.audioAnalyser,
+      this.videoCanvases[0].audioAnalyser,
       this.audioBuffer,
       this.videoWidth
     )
-    const imageData = this.videoCanvas.captureFrame()
+    const imageData = this
+      .videoCanvases[this.activeVideoCanvasIndex]
+      .captureFrame()
     this.imageProcessor.process(imageData, { loudness, samples })
     requestAnimationFrame(this.processFrame.bind(this))
   }
@@ -105,6 +108,39 @@ export default class GrittyViddy extends Base {
       document.exitFullscreen()
     } else {
       this.wrapper.requestFullscreen()
+    }
+  }
+
+  async switchFeedHandler (num) {
+    this.activeVideoCanvasIndex = num - 1
+  }
+
+  async addFeedHandler () {
+    // Add a new device feed.
+    // Get the deviceId values of the current feeds.
+    const activeDeviceIds = this.videoCanvases.map(x => x.deviceId)
+
+    // Request the first of the available, inactive devices.
+    const videoDevices = Array.from(
+      await navigator.mediaDevices.enumerateDevices()
+    ).filter(x => x.kind === "videoinput" && !activeDeviceIds.includes(x.deviceId))
+
+    if (videoDevices.length > 0) {
+      // Request access to the first one but the user can select whatever they want
+      // in the browser prompt.
+      const videoCanvas = Element(
+        `<video-canvas deviceId=${videoDevices[0].deviceId}
+                       width="${this.videoWidth}"
+                       height="${this.videoHeight}">
+         </video-canvas>
+        `
+      )
+      this.videoCanvases.push(videoCanvas)
+      this.wrapper.appendChild(videoCanvas)
+      publish(TOPICS.FEED_ADDED)
+      const feedNum = this.videoCanvases.length
+      publish(TOPICS.SWITCH_FEED, feedNum)
+      this.switchFeedHandler(feedNum)
     }
   }
 }
