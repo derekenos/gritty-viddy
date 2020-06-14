@@ -53,9 +53,9 @@ The following application-specific variables (created by [getAudioParams()](http
 
 The whole point of this project is to make it easy to write vanilla Javascript functions to process video frame pixels.
 
-More (read: accurate) details to follow, but the process is:
+To create a new filter:
 
-1. Add your new filter function to [filters.js](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js). I suggest using [invert](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js#L139-L144) as a template for a parameterless function, and [brightness](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js#L75-L84) for one that takes one or more parameters.
+1. Create your new filter function in [filters.js](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js). I suggest using [invert](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js#L139-L144) as a template for a parameterless function, and [brightness](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js#L75-L84) for one that takes one or more parameters.
 
 2. Add a [gpu.js](https://github.com/gpujs/gpu.js) wrapper function for your filter in [gpuFilters.js](https://github.com/derekenos/gritty-viddy/blob/master/lib/gpuFilters.js). I also recommend using `invert` and `brightness` as templates here.
 
@@ -64,6 +64,22 @@ More (read: accurate) details to follow, but the process is:
 3. Add your filter's default params to [constants.FILTER_NAME_PARAM_DEFAULT_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L92)
 
 4. Add your filter function's positional `params` argument info to [constants.FILTER_NAME_PARAM_KEY_ARR_POS_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L113). Within the application, the filter params are represented using an object with human-friendly keys and values, but when it comes time to actually invoke the filter function, for compatibility with `gpu.js`, this params object needs to be converted to an array of numbers and `FILTER_NAME_PARAM_KEY_ARR_POS_MAP` is where you specify the position in the final array for each param.
+
+Note that if your filter function needs to access the original `ImageData` array (passed to the filter function as `data`), for example to read pixels other than its own to implement something like `Horizontal Mirror`, you need to:
+
+- Define your non-GPU filter function in `filters.js`
+- Add your filter to the [filters.FRAME_BUFFER_FILTERS](https://github.com/derekenos/gritty-viddy/blob/master/lib/filters.js#L250) array
+- Define your GPU filter function in `gpuFilters.js` that includes all of the filter logic / does not invoke `FILTERS.<yourNonGPUFunction>`
+
+Here are some examples of filters that are implemented in this way:
+
+- Flip Horizontal
+- Horizontal Mirror
+- Vertical Mirror
+- Blur
+- Pan / Zoom
+
+
 
 
 
