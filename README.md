@@ -59,13 +59,12 @@ More (read: accurate) details to follow, but the process is:
 
 2. Add a [gpu.js](https://github.com/gpujs/gpu.js) wrapper function for your filter in [gpuFilters.js](https://github.com/derekenos/gritty-viddy/blob/master/lib/gpuFilters.js). I also recommend using `invert` and `brightness` as templates here.
 
-3. Add your filter's default params to [constants.FILTER_NAME_PARAM_DEFAULT_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L71)
+3. Add your filter's dropdown label to [constants.FILTER_NAME_DISPLAYNAME_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L74)
 
-4. Add your filter function's positional `params` argument info to [ImageProcessor.FILTER_NAME_PARAM_KEY_ARR_POS_MAP](https://github.com/derekenos/gritty-viddy/blob/master/components/ImageProcessor.js#L26). I know...I know. Within the application, the filter params are represented using an object with human-friendly keys and values, but when it comes time to actually invoke the filter function, for compatibility with `gpu.js`, this params object needs to be converted to an array of numbers and `FILTER_NAME_PARAM_KEY_ARR_POS_MAP` is where you specify the position in the final array for each param.
+3. Add your filter's default params to [constants.FILTER_NAME_PARAM_DEFAULT_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L92)
 
-5. Add your filter as an `<option>` to the [`<select>` in `FilterRow.js`](https://github.com/derekenos/gritty-viddy/blob/master/components/FilterRow.js#L137).
+4. Add your filter function's positional `params` argument info to [constants.FILTER_NAME_PARAM_KEY_ARR_POS_MAP](https://github.com/derekenos/gritty-viddy/blob/master/lib/constants.js#L113). Within the application, the filter params are represented using an object with human-friendly keys and values, but when it comes time to actually invoke the filter function, for compatibility with `gpu.js`, this params object needs to be converted to an array of numbers and `FILTER_NAME_PARAM_KEY_ARR_POS_MAP` is where you specify the position in the final array for each param.
 
-6. Maybe that's it ¯\_(ツ)_/¯
 
 
 
