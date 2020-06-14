@@ -1,9 +1,12 @@
 
 import Base from "./Base.js"
-import { FILTER_NAME_PARAM_KEY_ARR_POS_MAP } from "./ImageProcessor.js"
-import { TOPICS } from "../lib/constants.js"
 import { Element } from "../lib/domHelpers.js"
 import { publish } from "../lib/pubSub.js"
+import {
+  FILTER_NAME_DISPLAYNAME_MAP,
+  FILTER_NAME_PARAM_KEY_ARR_POS_MAP,
+  TOPICS,
+} from "../lib/constants.js"
 
 
 const FILTER_PARAM_STYLE = maxContentRems => `
@@ -121,20 +124,11 @@ export default class FilterRow extends Base {
          <button class="move-up">&uarr;</button>
          <button class="move-down">&darr;</button>
          <select class="filter">
-           <option value="threshold">Threshold</option>
-           <option value="brightness">Brightness</option>
-           <option value="channel">Channel</option>
-           <option value="colorGain">Color Gain</option>
-           <option value="colorReducer">Color Reducer</option>
-           <option value="rowBlanker">Row Blanker</option>
-           <option value="colBlanker">Column Blanker</option>
-           <option value="invert">Invert</option>
-           <option value="audioPlot">Audio Plot</option>
-           <option value="flipHorizontal">Flip Horizontal</option>
-           <option value="verticalMirror">Vertical Mirror</option>
-           <option value="horizontalMirror">Horizontal Mirror</option>
-           <option value="blur">Blur</option>
-           <option value="panZoom">Pan / Zoom</option>
+           ${Array.from(FILTER_NAME_DISPLAYNAME_MAP.entries()).map(
+               ([ name, displayname ]) =>
+                 `<option value="${name}">${displayname}</option>`
+             ).join('\n')
+           }
          </select>
          <span class="filter-params"></span>
        </li>

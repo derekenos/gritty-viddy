@@ -2,6 +2,7 @@
 import Base from "./Base.js"
 import {
   FILTER_NAME_PARAM_DEFAULT_MAP,
+  FILTER_NAME_PARAM_KEY_ARR_POS_MAP,
   FILTER_PRESETS,
   TOPICS,
 } from "../lib/constants.js"
@@ -17,29 +18,6 @@ const STYLE = `
     width: 100%;
   }
 `
-
-
-// The filter functions need params to be a positionally-mapped array of
-// scalars because that's what gpu.js can deal with, but UI-wise, it's better
-// for us to deal in named parameters, so this maps the param names to their
-// array position so that we can do the translation on filter function call.
-export const FILTER_NAME_PARAM_KEY_ARR_POS_MAP = new Map([
-  [ "threshold", [ "threshold" ] ],
-  [ "brightness", [ "factor" ] ],
-  [ "channel", [ "r", "g", "b" ] ],
-  [ "colorGain", [ "r", "g", "b" ] ],
-  [ "colorReducer", [ "mask" ] ],
-  [ "rowBlanker", [ "nth" ] ],
-  [ "colBlanker", [ "nth" ] ],
-  [ "invert", [ ] ],
-  [ "audioPlot", [ ] ],
-  [ "flipHorizontal", [ ] ],
-  [ "verticalMirror", [ ] ],
-  [ "horizontalMirror", [ ] ],
-  [ "blur", [ "level" ] ],
-  [ "panZoom", [ "x", "y", "zoom" ] ],
-])
-
 
 // Return the object-type filter function params as a positionally mapped array.
 const paramsObjectToArray = (filterName, paramsObj) =>
