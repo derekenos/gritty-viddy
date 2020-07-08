@@ -129,7 +129,7 @@ export default class GrittyViddy extends Base {
       // Request access to the first one but the user can select whatever they want
       // in the browser prompt.
       const videoCanvas = Element(
-        `<video-canvas deviceId=${videoDevices[0].deviceId}
+        `<video-canvas deviceId="${videoDevices[0].deviceId}"
                        width="${this.videoWidth}"
                        height="${this.videoHeight}">
          </video-canvas>

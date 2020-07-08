@@ -37,8 +37,8 @@ export default class VideoCanvas extends Base {
     const constraints = {
       audio: true,
       video: {
-        width: this.width,
-        height: this.height,
+        width: { ideal: this.width },
+        height: { ideal: this.height },
       }
     }
     if (this.deviceId !== undefined) {
