@@ -75,7 +75,6 @@ export default class VideoCanvas extends Base {
     canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height)
     return canvasCtx.getImageData(0, 0, canvas.width, canvas.height)
   }
-
 }
 
 

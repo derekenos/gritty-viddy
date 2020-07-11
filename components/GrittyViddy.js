@@ -77,9 +77,6 @@ export default class GrittyViddy extends Base {
     subscribe(TOPICS.RECORD_START, () => this.recorder.start())
     subscribe(TOPICS.RECORD_STOP, () => this.recorder.stop())
 
-    // Create an audio buffer for realtime sampling.
-    this.audioBuffer = new Uint8Array(this.videoCanvases[0].audioAnalyser.fftSize)
-
     // Start processing frames.
     requestAnimationFrame(this.processFrame.bind(this))
   }
@@ -87,7 +84,6 @@ export default class GrittyViddy extends Base {
   processFrame () {
     const { loudness, samples } = getAudioParams(
       this.videoCanvases[0].audioAnalyser,
-      this.audioBuffer,
       this.videoWidth
     )
     const imageData = this
