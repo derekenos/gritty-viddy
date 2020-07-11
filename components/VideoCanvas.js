@@ -4,6 +4,10 @@ import { Element } from "../lib/domHelpers.js"
 
 
 const STYLE = `
+  video {
+    visibility: hidden;
+  }
+
   canvas {
     display: none;
   }
