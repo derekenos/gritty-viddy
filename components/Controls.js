@@ -79,6 +79,10 @@ const STYLE = `
     opacity: 1;
   }
 
+  .feed.active {
+    background-color: #f50;
+  }
+
   .record.recording,
   .record.recording:hover {
     background-color: rgba(255, 0, 0, 1);
@@ -91,6 +95,7 @@ export default class Controls extends Base {
   constructor () {
     super()
     this.filters = []
+    this.feedDeviceIds = []
   }
 
   connectedCallback () {
@@ -110,6 +115,11 @@ export default class Controls extends Base {
              <ol></ol>
              <button class="add-filter">Add Filter</button>
            </div>
+         </div>
+
+         <div class="feeds-wrapper">
+           <span class="feeds"></span>
+           <button class="add-feed">+</button>
          </div>
 
          <div><button class="record">Record</button></div>
@@ -133,11 +143,20 @@ export default class Controls extends Base {
     this.wrapper.querySelector(".record")
       .addEventListener("click", this.recordClickHandler.bind(this))
 
-    // Allow fullscreen to be controlled by the "f" key.
+    this.wrapper.querySelector(".add-feed")
+      .addEventListener("click", () => publish(TOPICS.ADD_FEED))
+
+    // Allow fullscreen to be controlled by the "f" key and number keys to select feed.
     window.addEventListener("keydown", e => {
       if (e.key === "f") {
         publish(TOPICS.FULLSCREEN_TOGGLE)
         return
+      }
+      const feedNum = parseInt(e.key)
+      if (!Number.isNaN(feedNum) &&
+          feedNum <= this.wrapper.querySelector(".feeds").children.length) {
+        publish(TOPICS.SWITCH_FEED, feedNum)
+        this.switchFeedHandler(feedNum)
       }
     })
 
@@ -156,6 +175,9 @@ export default class Controls extends Base {
     this.filters = FILTER_PRESETS.get(filterPreset.value)
     this.renderFilters()
 
+    this.wrapper.querySelector(".feeds")
+      .addEventListener("click", this.feedClickHandler.bind(this))
+
     this.wrapper.querySelector(".add-filter")
       .addEventListener("click", this.addFilter.bind(this))
 
@@ -164,6 +186,8 @@ export default class Controls extends Base {
     subscribe(TOPICS.REMOVE_FILTER, this.removeFilterHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_UP, this.moveFilterUpHandler.bind(this))
     subscribe(TOPICS.MOVE_FILTER_DOWN, this.moveFilterDownHandler.bind(this))
+    subscribe(TOPICS.FEED_ADDED, this.feedAddedHandler.bind(this))
+    subscribe(TOPICS.SWITCH_FEED, this.switchFeedHandler.bind(this))
   }
 
   addFilter () {
@@ -173,6 +197,15 @@ export default class Controls extends Base {
     publish(TOPICS.ADD_FILTER, filter)
     this.filters.push(filter)
     this.renderFilters()
+  }
+
+  feedClickHandler (e) {
+    const target = e.target
+    if (!target.classList.contains("active")) {
+      const feedNum = parseInt(target.dataset.feedNum)
+      publish(TOPICS.SWITCH_FEED, feedNum)
+      this.switchFeedHandler(feedNum)
+    }
   }
 
   renderFilters () {
@@ -258,6 +291,31 @@ export default class Controls extends Base {
     }
     // Clear preset selection.
     this.shadow.querySelector("select.filter-preset").value = ""
+  }
+
+  feedAddedHandler (deviceId) {
+    const feeds = this.shadow.querySelector(".feeds")
+    const feedNum = feeds.children.length + 1
+    feeds.appendChild(
+      Element(
+        `<div>
+           <button class="feed" data-feed-num="${feedNum}">
+             Feed ${feedNum}
+           </button>
+         </div>
+        `
+      )
+    )
+  }
+
+  switchFeedHandler (num) {
+    // Set the active style on the specified feed.
+    const currentActive = this.shadow.querySelector(".feeds button.active")
+    if (currentActive) {
+      currentActive.classList.remove("active")
+    }
+    this.shadow.querySelector(`.feeds > div:nth-child(${num}) button`)
+      .classList.add("active")
   }
 
 }

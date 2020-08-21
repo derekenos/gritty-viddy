@@ -51,13 +51,10 @@ export default class GrittyViddy extends Base {
     this.controls = Element(`<con-trols></con-trols>`)
     this.wrapper.appendChild(this.controls)
 
-    this.inputStream = Element(
-      `<input-stream width="${this.videoWidth}"
-                     height="${this.videoHeight}">
-       </input-stream>
-      `
-    )
-    this.shadow.append(this.inputStream)
+    // Initialize the first InputStream.
+    this.inputstreames = []
+    await this.addFeedHandler()
+    this.activeInputStreamIndex = 0
 
     // Initialize the ImageProcessor.
     this.imageProcessor = Element(
@@ -71,10 +68,12 @@ export default class GrittyViddy extends Base {
     // Initialize the canvas recorder.
     this.recorder = new CanvasRecorder(
       this.imageProcessor.canvas,
-      this.inputStream.audioTrack,
+      this.inputstreames[0].audioTrack,
     )
 
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
+    subscribe(TOPICS.ADD_FEED, this.addFeedHandler.bind(this))
+    subscribe(TOPICS.SWITCH_FEED, this.switchFeedHandler.bind(this))
     subscribe(TOPICS.RECORD_START, () => this.recorder.start())
     subscribe(TOPICS.RECORD_STOP, () => this.recorder.stop())
 
@@ -84,10 +83,12 @@ export default class GrittyViddy extends Base {
 
   processFrame () {
     const { loudness, samples } = getAudioParams(
-      this.inputStream.audioAnalyser,
+      this.inputstreames[0].audioAnalyser,
       this.videoWidth
     )
-    const imageData = this.inputStream.captureFrame()
+    const imageData = this
+      .inputstreames[this.activeInputStreamIndex]
+      .captureFrame()
     this.imageProcessor.process(imageData, { loudness, samples })
     requestAnimationFrame(this.processFrame.bind(this))
   }
@@ -103,6 +104,39 @@ export default class GrittyViddy extends Base {
       document.exitFullscreen()
     } else {
       this.wrapper.requestFullscreen()
+    }
+  }
+
+  async switchFeedHandler (num) {
+    this.activeInputStreamIndex = num - 1
+  }
+
+  async addFeedHandler () {
+    // Add a new device feed.
+    // Get the deviceId values of the current feeds.
+    const activeDeviceIds = this.inputstreames.map(x => x.deviceId)
+
+    // Request the first of the available, inactive devices.
+    const videoDevices = Array.from(
+      await navigator.mediaDevices.enumerateDevices()
+    ).filter(x => x.kind === "videoinput" && !activeDeviceIds.includes(x.deviceId))
+
+    if (videoDevices.length > 0) {
+      // Request access to the first one but the user can select whatever they want
+      // in the browser prompt.
+      const inputstream = Element(
+        `<input-stream deviceId="${videoDevices[0].deviceId}"
+                       width="${this.videoWidth}"
+                       height="${this.videoHeight}">
+         </input-stream>
+        `
+      )
+      this.inputstreames.push(inputstream)
+      this.wrapper.appendChild(inputstream)
+      publish(TOPICS.FEED_ADDED)
+      const feedNum = this.inputstreames.length
+      publish(TOPICS.SWITCH_FEED, feedNum)
+      this.switchFeedHandler(feedNum)
     }
   }
 }
