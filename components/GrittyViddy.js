@@ -2,7 +2,7 @@
 import Base from "./Base.js"
 import Controls from "./Controls.js"
 import ImageProcessor from "./ImageProcessor.js"
-import VideoCanvas from "./VideoCanvas.js"
+import InputStream from "./InputStream.js"
 import { getAudioParams } from "../lib/audio.js"
 import CanvasRecorder from "../lib/canvasRecorder.js"
 import { TOPICS } from "../lib/constants.js"
@@ -16,7 +16,7 @@ const STYLE = `
     position: relative;
   }
 
-  video-canvas {
+  input-stream {
     position: absolute;
     z-index: 0;
   }
@@ -51,10 +51,10 @@ export default class GrittyViddy extends Base {
     this.controls = Element(`<con-trols></con-trols>`)
     this.wrapper.appendChild(this.controls)
 
-    // Initialize the first VideoCanvas.
-    this.videoCanvases = []
+    // Initialize the first InputStream.
+    this.inputstreames = []
     await this.addFeedHandler()
-    this.activeVideoCanvasIndex = 0
+    this.activeInputStreamIndex = 0
 
     // Initialize the ImageProcessor.
     this.imageProcessor = Element(
@@ -68,7 +68,7 @@ export default class GrittyViddy extends Base {
     // Initialize the canvas recorder.
     this.recorder = new CanvasRecorder(
       this.imageProcessor.canvas,
-      this.videoCanvases[0].audioTrack,
+      this.inputstreames[0].audioTrack,
     )
 
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
@@ -83,11 +83,11 @@ export default class GrittyViddy extends Base {
 
   processFrame () {
     const { loudness, samples } = getAudioParams(
-      this.videoCanvases[0].audioAnalyser,
+      this.inputstreames[0].audioAnalyser,
       this.videoWidth
     )
     const imageData = this
-      .videoCanvases[this.activeVideoCanvasIndex]
+      .inputstreames[this.activeInputStreamIndex]
       .captureFrame()
     this.imageProcessor.process(imageData, { loudness, samples })
     requestAnimationFrame(this.processFrame.bind(this))
@@ -108,13 +108,13 @@ export default class GrittyViddy extends Base {
   }
 
   async switchFeedHandler (num) {
-    this.activeVideoCanvasIndex = num - 1
+    this.activeInputStreamIndex = num - 1
   }
 
   async addFeedHandler () {
     // Add a new device feed.
     // Get the deviceId values of the current feeds.
-    const activeDeviceIds = this.videoCanvases.map(x => x.deviceId)
+    const activeDeviceIds = this.inputstreames.map(x => x.deviceId)
 
     // Request the first of the available, inactive devices.
     const videoDevices = Array.from(
@@ -124,17 +124,17 @@ export default class GrittyViddy extends Base {
     if (videoDevices.length > 0) {
       // Request access to the first one but the user can select whatever they want
       // in the browser prompt.
-      const videoCanvas = Element(
-        `<video-canvas deviceId="${videoDevices[0].deviceId}"
+      const inputstream = Element(
+        `<input-stream deviceId="${videoDevices[0].deviceId}"
                        width="${this.videoWidth}"
                        height="${this.videoHeight}">
-         </video-canvas>
+         </input-stream>
         `
       )
-      this.videoCanvases.push(videoCanvas)
-      this.wrapper.appendChild(videoCanvas)
+      this.inputstreames.push(inputstream)
+      this.wrapper.appendChild(inputstream)
       publish(TOPICS.FEED_ADDED)
-      const feedNum = this.videoCanvases.length
+      const feedNum = this.inputstreames.length
       publish(TOPICS.SWITCH_FEED, feedNum)
       this.switchFeedHandler(feedNum)
     }

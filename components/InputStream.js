@@ -14,7 +14,7 @@ const STYLE = `
 `
 
 
-export default class VideoCanvas extends Base {
+export default class InputStream extends Base {
   connectedCallback () {
     super.connectedCallback(STYLE)
 
@@ -78,4 +78,4 @@ export default class VideoCanvas extends Base {
 }
 
 
-customElements.define("video-canvas", VideoCanvas)
+customElements.define("input-stream", InputStream)
