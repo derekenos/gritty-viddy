@@ -52,7 +52,7 @@ export default class GrittyViddy extends Base {
     this.wrapper.appendChild(this.controls)
 
     // Initialize the first InputStream.
-    this.inputstreames = []
+    this.inputStreams = []
     await this.addFeedHandler()
     this.activeInputStreamIndex = 0
 
@@ -68,7 +68,7 @@ export default class GrittyViddy extends Base {
     // Initialize the canvas recorder.
     this.recorder = new CanvasRecorder(
       this.imageProcessor.canvas,
-      this.inputstreames[0].audioTrack,
+      this.inputStreams[0].audioTrack,
     )
 
     subscribe(TOPICS.FULLSCREEN_TOGGLE, this.toggleFullscreen.bind(this))
@@ -83,11 +83,11 @@ export default class GrittyViddy extends Base {
 
   processFrame () {
     const { loudness, samples } = getAudioParams(
-      this.inputstreames[0].audioAnalyser,
+      this.inputStreams[0].audioAnalyser,
       this.videoWidth
     )
     const imageData = this
-      .inputstreames[this.activeInputStreamIndex]
+      .inputStreams[this.activeInputStreamIndex]
       .captureFrame()
     this.imageProcessor.process(imageData, { loudness, samples })
     requestAnimationFrame(this.processFrame.bind(this))
@@ -114,7 +114,7 @@ export default class GrittyViddy extends Base {
   async addFeedHandler () {
     // Add a new device feed.
     // Get the deviceId values of the current feeds.
-    const activeDeviceIds = this.inputstreames.map(x => x.deviceId)
+    const activeDeviceIds = this.inputStreams.map(x => x.deviceId)
 
     // Request the first of the available, inactive devices.
     const videoDevices = Array.from(
@@ -131,10 +131,10 @@ export default class GrittyViddy extends Base {
          </input-stream>
         `
       )
-      this.inputstreames.push(inputstream)
+      this.inputStreams.push(inputstream)
       this.wrapper.appendChild(inputstream)
       publish(TOPICS.FEED_ADDED)
-      const feedNum = this.inputstreames.length
+      const feedNum = this.inputStreams.length
       publish(TOPICS.SWITCH_FEED, feedNum)
       this.switchFeedHandler(feedNum)
     }

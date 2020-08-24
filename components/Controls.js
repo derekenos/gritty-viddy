@@ -1,6 +1,7 @@
 
 import Base from "./Base.js"
 import FilterRow from "./FilterRow.js"
+import Modal from "./Modal.js"
 import {
   FILTER_NAME_PARAM_DEFAULT_MAP,
   FILTER_PRESET_NAMES,
@@ -144,7 +145,7 @@ export default class Controls extends Base {
       .addEventListener("click", this.recordClickHandler.bind(this))
 
     this.wrapper.querySelector(".add-feed")
-      .addEventListener("click", () => publish(TOPICS.ADD_FEED))
+      .addEventListener("click", this.addFeedHandler.bind(this))
 
     // Allow fullscreen to be controlled by the "f" key and number keys to select feed.
     window.addEventListener("keydown", e => {
@@ -197,6 +198,30 @@ export default class Controls extends Base {
     publish(TOPICS.ADD_FILTER, filter)
     this.filters.push(filter)
     this.renderFilters()
+  }
+
+  async addFeedHandler (e) {
+    // Get an array of available video devices that
+    const videoDevices = Array.from(
+      await navigator.mediaDevices.enumerateDevices()
+    ).filter(x => x.kind === "videoinput" && !this.feedDeviceIds.includes(x.deviceId))
+
+    console.log(videoDevices)
+
+    // Display the device selection modal.
+    const modalEl = Element(
+      `<mod-al cancelable confirmable>
+         <div slot="content">
+           <h1>Select New Feed Source</h1>
+           <select name="device">
+             ${ videoDevices.map( x => `<option>${ x.label || x.deviceId }</option>`).join('\n') }
+           </select>
+         </div>
+       </mod-al>`
+    )
+    this.shadow.appendChild(modalEl)
+
+    publish(TOPICS.ADD_FEED)
   }
 
   feedClickHandler (e) {
