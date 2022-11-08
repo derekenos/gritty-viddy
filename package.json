@@ -42,10 +42,10 @@
     "npm": "^6.14.4",
     "serve": "^11.3.2",
     "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "core-js": "^3.6.4",
-    "html-webpack-plugin": "^3.2.0"
+    "html-webpack-plugin": "^5.5.0"
   }
 }
